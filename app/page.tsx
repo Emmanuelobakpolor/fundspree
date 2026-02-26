@@ -15,9 +15,9 @@ export default function Home() {
       <Hero />
       <Features />
       <HowItWorks />
+      <EngagementFeatures />
       
       {/* 
-      <EngagementFeatures />
       <SecuritySection />
       <CallToAction />
       <Footer /> 
