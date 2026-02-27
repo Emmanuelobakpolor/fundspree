@@ -42,16 +42,22 @@ function WithdrawCryptoIcon() {
 
 const steps = [
   {
+    photo: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=480&q=80',
+    photoAlt: 'Person creating a new account on laptop',
     icon: <CreateAccountIcon />,
     title: "Create Account",
     description: "Sign up in minutes with your email and basic details. Verify your identity for full access.",
   },
   {
+    photo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=480&q=80',
+    photoAlt: 'Activating a digital payment card on phone',
     icon: <ActivateCardIcon />,
     title: "Activate Card",
     description: "Once approved, your digital card is ready for use. Request a physical one for global shopping.",
   },
   {
+    photo: 'https://images.unsplash.com/photo-1621761191319-c6fb62004040?auto=format&fit=crop&w=480&q=80',
+    photoAlt: 'Crypto withdrawal on mobile app',
     icon: <WithdrawCryptoIcon />,
     title: "Withdraw to Crypto",
     description: "Instant withdrawals to any BTC or USDT wallet. Spend globally with your FundSphere card.",
@@ -82,31 +88,42 @@ export default function HowItWorks() {
           </motion.p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative">
-          {/* Connector line for desktop */}
-          <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 dark:bg-gray-800 -translate-y-1/2 z-0"></div>
-
+        <div className="flex flex-col md:flex-row items-stretch justify-between gap-8">
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.2 }}
-              className="relative z-10 flex-1 text-center group"
+              transition={{ delay: index * 0.18 }}
+              className="flex-1 group bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2"
             >
-              <div className="relative w-20 h-20 mx-auto mb-8 group-hover:scale-110 transition-transform duration-500">
-                <div className="w-full h-full bg-white dark:bg-gray-900 border-4 border-gray-100 dark:border-gray-800 rounded-full flex items-center justify-center shadow-lg">
-                  <div className="text-gold group-hover:text-gold-dark transition-colors">{step.icon}</div>
-                </div>
-                <div className="absolute top-0 right-0 w-8 h-8 bg-gold text-black text-xs font-bold rounded-full flex items-center justify-center -translate-y-1 translate-x-1">
+              {/* Photo */}
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src={step.photo}
+                  alt={step.photoAlt}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50" />
+                {/* Step number badge */}
+                <div className="absolute top-4 left-4 w-9 h-9 bg-gold text-black text-sm font-black rounded-full flex items-center justify-center shadow-lg">
                   0{index + 1}
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4 dark:text-white transition-colors group-hover:text-gold">{step.title}</h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-xs mx-auto">
-                {step.description}
-              </p>
+
+              {/* Content */}
+              <div className="p-7 text-center">
+                <div className="relative w-16 h-16 mx-auto mb-5">
+                  <div className="w-full h-full bg-gray-50 dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl flex items-center justify-center group-hover:border-gold/40 transition-colors duration-300">
+                    <div className="text-gold">{step.icon}</div>
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold mb-3 dark:text-white group-hover:text-gold transition-colors">{step.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                  {step.description}
+                </p>
+              </div>
             </motion.div>
           ))}
         </div>

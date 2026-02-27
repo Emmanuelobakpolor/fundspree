@@ -98,58 +98,66 @@ export default function SecuritySection() {
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <div className="w-full lg:w-1/2 relative">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.93 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="relative z-10 p-8 bg-white dark:bg-gray-900/80 rounded-3xl border border-gray-100 dark:border-white/10 shadow-xl"
+              className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border border-gold/20"
+              style={{ aspectRatio: '4/5' }}
             >
-              <div className="flex items-center space-x-4 mb-8">
-                <div className="w-14 h-14 bg-gold rounded-2xl flex items-center justify-center text-black shadow-lg">
-                  <ShieldGoldIcon />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold dark:text-white uppercase tracking-tighter">Gold-Tier Shield</h3>
-                  <p className="text-xs text-gold font-bold tracking-widest italic uppercase">Active protection enabled</p>
-                </div>
+              {/* Real photo */}
+              <img
+                src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&q=85"
+                alt="Secure mobile banking"
+                className="w-full h-full object-cover"
+              />
+
+              {/* Gradient overlay – bottom heavy */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+
+              {/* Top-left live badge */}
+              <div className="absolute top-5 left-5 flex items-center gap-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-full px-4 py-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-white text-xs font-semibold tracking-wide">Active Protection</span>
               </div>
 
-              <div className="space-y-6">
-                <div className="p-5 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-between border border-transparent hover:border-gold/30 transition-all cursor-default">
-                  <div className="flex items-center space-x-4">
-                    <CheckCircle2 className="text-green-500 w-5 h-5" />
-                    <span className="font-semibold dark:text-gray-300">Biometric Authentication</span>
-                  </div>
-                  <span className="text-xs font-bold text-green-500 uppercase tracking-widest">Verified</span>
-                </div>
-                <div className="p-5 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-between border border-transparent hover:border-gold/30 transition-all cursor-default">
-                  <div className="flex items-center space-x-4">
-                    <CheckCircle2 className="text-green-500 w-5 h-5" />
-                    <span className="font-semibold dark:text-gray-300">AES-256 Encryption</span>
-                  </div>
-                  <span className="text-xs font-bold text-green-500 uppercase tracking-widest">Active</span>
-                </div>
-                <div className="p-5 bg-black/5 dark:bg-white/5 rounded-2xl flex items-center justify-between border border-transparent hover:border-gold/30 transition-all cursor-default">
-                  <div className="flex items-center space-x-4">
-                    <CheckCircle2 className="text-green-500 w-5 h-5" />
-                    <span className="font-semibold dark:text-gray-300">Cold Storage Wallet</span>
-                  </div>
-                  <span className="text-xs font-bold text-green-500 uppercase tracking-widest">Secured</span>
-                </div>
+              {/* Top-right shield badge */}
+              <div className="absolute top-5 right-5 w-11 h-11 bg-gold rounded-2xl flex items-center justify-center text-black shadow-lg shadow-gold/30">
+                <ShieldGoldIcon />
               </div>
 
-              <div className="mt-10 p-6 bg-gold-gradient rounded-2xl flex items-center justify-between text-black shadow-xl">
-                <div>
-                  <p className="text-xs opacity-70 mb-1">Security Score</p>
-                  <p className="text-3xl font-bold italic">A+ GRADE</p>
+              {/* Bottom overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <p className="text-gold text-[10px] font-bold tracking-[0.2em] uppercase mb-1">Gold-Tier Shield</p>
+                <p className="text-white font-bold text-xl leading-tight mb-5">Enterprise-Grade<br />Security Active</p>
+
+                {/* Feature chips */}
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  {[
+                    { label: 'Biometric Auth', status: 'VERIFIED' },
+                    { label: 'AES-256', status: 'ACTIVE' },
+                    { label: 'Cold Storage', status: 'SECURED' },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full px-3 py-1.5">
+                      <CheckCircle2 className="text-green-400 w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="text-white/90 text-[11px] font-medium">{item.label}</span>
+                    </div>
+                  ))}
                 </div>
-                {/* Circular progress */}
-                <div className="relative w-16 h-16">
-                  <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth="3"
-                      strokeDasharray="100 0" strokeLinecap="round" />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center font-bold text-lg">100</span>
+
+                {/* Score bar */}
+                <div className="bg-white/10 backdrop-blur-sm border border-gold/30 rounded-2xl px-5 py-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-white/60 text-[10px] uppercase tracking-widest mb-0.5">Security Score</p>
+                    <p className="text-white font-black text-2xl tracking-tight">A+ GRADE</p>
+                  </div>
+                  <div className="relative w-14 h-14">
+                    <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#D4AF37" strokeWidth="3"
+                        strokeDasharray="100 0" strokeLinecap="round" />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center font-bold text-sm text-white">100</span>
+                  </div>
                 </div>
               </div>
             </motion.div>

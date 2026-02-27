@@ -7,21 +7,22 @@ import HowItWorks from '../components/HowItWorks';
 import EngagementFeatures from '../components/EngagementFeatures';
 import SecuritySection from '../components/SecuritySection';
 import { CallToAction, Footer } from '../components/Footer';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function Home() {
   return (
-    <main className="relative overflow-x-hidden transition-colors duration-300">
-      <Navbar />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <EngagementFeatures />
-      
-      {/* 
-      <SecuritySection />
-      <CallToAction />
-      <Footer /> 
-      */}
-    </main>
+    <>
+      <LoadingScreen />
+      <main className="relative overflow-x-hidden transition-colors duration-300">
+        <Navbar />
+        <Hero />
+        <Features />
+        <HowItWorks />
+        <EngagementFeatures />
+        <SecuritySection />
+        <CallToAction />
+        <Footer />
+      </main>
+    </>
   );
 }

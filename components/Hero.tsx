@@ -25,6 +25,7 @@ function Sparkline({ color, up }: { color: string; up: boolean }) {
 
 export default function Hero() {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [cardFlipped, setCardFlipped] = useState(false);
 
   return (
     <section className="relative pt-16 pb-12 md:pt-24 lg:pt-32 pb-16 md:pb-24 overflow-hidden">
@@ -180,45 +181,96 @@ export default function Hero() {
                   ))}
                 </div>
 
-                {/* Gold Card – scaled down */}
+                {/* Gold Card – flippable (click to flip) */}
                 <motion.div
                   initial={{ x: 50, y: 50, rotate: 8 }}
                   animate={{ x: 20, y: 20, rotate: -4 }}
                   transition={{ duration: 1.4, delay: 0.35 }}
-                  className="absolute -bottom-10 -right-6 sm:-bottom-12 sm:-right-8 w-[240px] sm:w-[260px] h-[150px] sm:h-[160px] rounded-2xl shadow-xl overflow-hidden hover:scale-105 transition-transform"
+                  className="absolute -bottom-10 -right-6 sm:-bottom-12 sm:-right-8 w-[240px] sm:w-[260px] h-[150px] sm:h-[160px]"
+                  style={{ perspective: '1200px' }}
                 >
-                  <div className="w-full h-full bg-gradient-to-br from-gold via-yellow-300 to-amber-400 p-4 sm:p-5 flex flex-col justify-between text-black relative">
-                    <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/15 rounded-full" />
-                    <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-black/10 rounded-full" />
+                  <motion.div
+                    animate={{ rotateY: cardFlipped ? 180 : 0 }}
+                    transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+                    className="w-full h-full relative cursor-pointer"
+                    style={{ transformStyle: 'preserve-3d' }}
+                    onClick={() => setCardFlipped(!cardFlipped)}
+                    whileHover={{ scale: 1.06 }}
+                    title="Click to flip"
+                  >
+                    {/* FRONT */}
+                    <div
+                      className="absolute inset-0 rounded-2xl shadow-xl overflow-hidden"
+                      style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                    >
+                      <div className="w-full h-full bg-gradient-to-br from-gold via-yellow-300 to-amber-400 p-4 sm:p-5 flex flex-col justify-between text-black relative">
+                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/15 rounded-full" />
+                        <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-black/10 rounded-full" />
 
-                    <div className="relative z-10 flex justify-between items-start">
-                      <div>
-                        <p className="font-black text-base tracking-tight">FundSphere</p>
-                        <p className="text-[10px] opacity-80">Digital Wallet Card</p>
+                        <div className="relative z-10 flex justify-between items-start">
+                          <div>
+                            <p className="font-black text-base tracking-tight">FundSphere</p>
+                            <p className="text-[10px] opacity-80">Digital Wallet Card</p>
+                          </div>
+                          <svg className="w-6 h-6 opacity-70" viewBox="0 0 20 20" fill="none">
+                            <circle cx="10" cy="10" r="8" stroke="black" strokeWidth="1.2" />
+                            <path d="M7 10c0-1.66 1.34-3 3-3" stroke="black" strokeWidth="1.2" strokeLinecap="round" />
+                            <path d="M4 10c0-3.31 2.69-6 6-6" stroke="black" strokeWidth="1.2" strokeLinecap="round" />
+                            <circle cx="10" cy="10" r="1.2" fill="black" />
+                          </svg>
+                        </div>
+
+                        <div className="relative z-10">
+                          <ChipIcon className="w-10 h-7" />
+                        </div>
+
+                        <div className="relative z-10 flex justify-between items-end">
+                          <div>
+                            <p className="font-mono text-sm font-bold tracking-widest">**** **** **** 8888</p>
+                            <p className="text-[9px] opacity-80 mt-0.5">PREMIUM MEMBER</p>
+                          </div>
+                          <div className="flex -space-x-2">
+                            <div className="w-8 h-8 rounded-full bg-black/30 border border-black/15" />
+                            <div className="w-8 h-8 rounded-full bg-black/50 border border-black/15" />
+                          </div>
+                        </div>
                       </div>
-                      <svg className="w-6 h-6 opacity-70" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="8" stroke="black" strokeWidth="1.2" />
-                        <path d="M7 10c0-1.66 1.34-3 3-3" stroke="black" strokeWidth="1.2" strokeLinecap="round" />
-                        <path d="M4 10c0-3.31 2.69-6 6-6" stroke="black" strokeWidth="1.2" strokeLinecap="round" />
-                        <circle cx="10" cy="10" r="1.2" fill="black" />
-                      </svg>
                     </div>
 
-                    <div className="relative z-10">
-                      <ChipIcon className="w-10 h-7" />
-                    </div>
+                    {/* BACK */}
+                    <div
+                      className="absolute inset-0 rounded-2xl shadow-xl overflow-hidden"
+                      style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                    >
+                      <div className="w-full h-full bg-gradient-to-br from-amber-600 via-yellow-400 to-gold flex flex-col text-black">
+                        {/* Magnetic stripe */}
+                        <div className="w-full h-9 bg-black/80 mt-5" />
+                        {/* Signature strip */}
+                        <div className="mx-3 mt-3 flex items-center gap-2">
+                          <div
+                            className="flex-1 h-7 rounded bg-white/90 flex items-center px-2"
+                            style={{ background: 'repeating-linear-gradient(90deg, #ddd 0, #ddd 4px, #fff 4px, #fff 10px)' }}
+                          />
+                          <div className="bg-white/90 rounded px-2 py-1 text-[10px] font-mono font-bold min-w-[34px] text-center border border-black/10">
+                            ***
+                          </div>
+                        </div>
+                        <p className="text-[8px] font-semibold opacity-50 px-3 mt-0.5 uppercase tracking-wider">Authorized Signature</p>
 
-                    <div className="relative z-10 flex justify-between items-end">
-                      <div>
-                        <p className="font-mono text-sm font-bold tracking-widest">**** **** **** 8888</p>
-                        <p className="text-[9px] opacity-80 mt-0.5">PREMIUM MEMBER</p>
-                      </div>
-                      <div className="flex -space-x-2">
-                        <div className="w-8 h-8 rounded-full bg-black/30 border border-black/15" />
-                        <div className="w-8 h-8 rounded-full bg-black/50 border border-black/15" />
+                        <div className="flex-1 px-3 flex flex-col justify-end pb-3">
+                          <p className="text-[8px] opacity-55 mb-0.5 uppercase tracking-wider">Customer Support</p>
+                          <p className="text-[9px] font-mono font-bold">support@fundsphere.io</p>
+                          <div className="mt-2 flex justify-between items-center">
+                            <p className="text-[10px] font-black tracking-tighter">FundSphere</p>
+                            <div className="flex -space-x-2">
+                              <div className="w-7 h-7 rounded-full bg-black/30 border border-black/15" />
+                              <div className="w-7 h-7 rounded-full bg-black/50 border border-black/15" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </div>
 

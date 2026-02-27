@@ -118,7 +118,7 @@ export default function Features() {
   return (
     <section id="features" className="py-24 bg-gray-50 dark:bg-dark-soft transition-colors duration-300">
       <div className="container mx-auto px-6">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-12">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -137,6 +137,36 @@ export default function Features() {
             Experience a suite of tools designed to make your crypto journey as smooth and premium as possible.
           </motion.p>
         </div>
+
+        {/* App showcase banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="relative w-full rounded-3xl overflow-hidden h-64 sm:h-80 mb-16 shadow-2xl"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1400&q=85"
+            alt="FundSphere platform dashboard"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          <div className="absolute left-8 sm:left-14 top-1/2 -translate-y-1/2">
+            <p className="text-gold text-[10px] font-bold tracking-[0.22em] uppercase mb-2">Platform Preview</p>
+            <p className="text-white text-2xl sm:text-3xl font-bold max-w-xs leading-snug">
+              Manage assets with<br />precision & style
+            </p>
+            <div className="mt-4 flex gap-3">
+              {['Real-time Data', 'Multi-asset', 'Instant Transfers'].map((tag) => (
+                <span key={tag} className="text-[10px] font-semibold text-black bg-gold/90 rounded-full px-3 py-1">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
