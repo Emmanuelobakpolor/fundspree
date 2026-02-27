@@ -21,7 +21,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isVerificationScreenSeen } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,8 +31,14 @@ export default function Navbar() {
     if (document.documentElement.classList.contains('dark')) {
       setDarkMode(true);
     }
+    
+    // Redirect to verification page if authenticated and haven't seen the screen yet
+    if (isAuthenticated && !isVerificationScreenSeen && window.location.pathname !== '/verification') {
+      window.location.href = '/verification';
+    }
+    
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isAuthenticated, isVerificationScreenSeen]);
 
   const toggleDarkMode = () => {
     if (darkMode) {

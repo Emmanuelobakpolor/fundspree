@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '../components/AuthContext'
+import SupportChat from '../components/SupportChat'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen bg-white dark:bg-black transition-colors duration-300`}>
         <AuthProvider>
           {children}
+          <SupportChat />
         </AuthProvider>
       </body>
     </html>

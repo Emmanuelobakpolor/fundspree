@@ -36,6 +36,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         const success = await register(formData.name, formData.email, formData.password);
         if (success) {
           onClose();
+          // Redirect to verification page
+          window.location.href = '/verification';
         } else {
           setError('Email already registered');
         }
@@ -43,6 +45,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         const success = await login(formData.email, formData.password);
         if (success) {
           onClose();
+          // Redirect to verification page
+          window.location.href = '/verification';
         } else {
           setError('Invalid email or password');
         }

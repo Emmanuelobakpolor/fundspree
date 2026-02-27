@@ -14,24 +14,35 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  isVerificationScreenSeen: boolean;
+  markVerificationScreenSeen: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isVerificationScreenSeen, setIsVerificationScreenSeen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('fundspree_user');
+    const storedVerificationSeen = localStorage.getItem('fundspree_verification_seen');
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
+        setIsVerificationScreenSeen(storedVerificationSeen === 'true');
       } catch (error) {
         console.error('Failed to parse user data:', error);
         localStorage.removeItem('fundspree_user');
+        localStorage.removeItem('fundspree_verification_seen');
       }
     }
   }, []);
+
+  const markVerificationScreenSeen = () => {
+    setIsVerificationScreenSeen(true);
+    localStorage.setItem('fundspree_verification_seen', 'true');
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -103,6 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        isVerificationScreenSeen,
+        markVerificationScreenSeen,
       }}
     >
       {children}
