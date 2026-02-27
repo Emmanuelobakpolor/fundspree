@@ -105,7 +105,10 @@ export default function Navbar() {
             </button>
 
             {isAuthenticated ? (
-              <div className="flex items-center gap-2 pl-1 pr-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+              <div 
+                className="flex items-center gap-2 pl-1 pr-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                onClick={() => window.location.href = '/dashboard'}
+              >
                 <div className="w-7 h-7 rounded-full bg-black dark:bg-gold flex items-center justify-center">
                   <User size={14} className="text-white dark:text-black" />
                 </div>
@@ -113,8 +116,11 @@ export default function Navbar() {
                   {user?.name}
                 </span>
                 <button
-                  onClick={logout}
-                  className="ml-1 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-all"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    logout();
+                  }}
+                  className="ml-1 p-1.5 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 transition-all"
                   aria-label="Logout"
                 >
                   <LogOut size={14} />
@@ -183,7 +189,13 @@ export default function Navbar() {
 
                 {isAuthenticated ? (
                   <>
-                    <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                    <div 
+                      className="flex items-center gap-3 px-5 py-3 bg-gray-50 dark:bg-gray-800 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                      onClick={() => {
+                        window.location.href = '/dashboard';
+                        setIsOpen(false);
+                      }}
+                    >
                       <div className="w-8 h-8 rounded-full bg-black dark:bg-gold flex items-center justify-center">
                         <User size={14} className="text-white dark:text-black" />
                       </div>
