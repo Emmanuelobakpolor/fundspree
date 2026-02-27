@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { CheckCircle2, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,6 +12,7 @@ interface VerificationStatusProps {
 type VerificationState = 'pending' | 'verified' | 'rejected';
 
 export default function VerificationStatus({ onBack }: VerificationStatusProps) {
+  const router = useRouter();
   const [verificationState, setVerificationState] = useState<VerificationState>('pending');
   const [checking, setChecking] = useState(false);
 
@@ -52,7 +54,7 @@ export default function VerificationStatus({ onBack }: VerificationStatusProps) 
           bgColor: 'bg-emerald-500/5',
           message: 'Your account has been successfully verified. You now have full access to all features.',
           buttonText: 'Go to Dashboard',
-          buttonAction: onBack || (() => {}),
+          buttonAction: () => router.push('/dashboard'),
           buttonDisabled: false,
         };
       case 'rejected':
