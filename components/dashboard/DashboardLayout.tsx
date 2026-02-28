@@ -25,7 +25,7 @@ import WalletCardsView from './views/WalletCardsView';
 import LoansView from './views/LoansView';
 import SpinWinView from './views/SpinWinView';
 import ProfileView from './views/ProfileView';
-import TransferView from './views/TransferView';
+import LinkWalletView from './views/LinkWalletView';
 import SecurityView from './views/SecurityView';
 import SupportView from './views/SupportView';
 
@@ -72,14 +72,20 @@ const viewTitles: Record<ViewId, string> = {
   support: 'Support Ticket',
 };
 
-function ViewRenderer({ activeView }: { activeView: ViewId }) {
+function ViewRenderer({
+  activeView,
+  navigate,
+}: {
+  activeView: ViewId;
+  navigate: (id: ViewId) => void;
+}) {
   switch (activeView) {
     case 'dashboard':    return <HomeView />;
     case 'wallet-cards': return <WalletCardsView />;
     case 'loans':        return <LoansView />;
     case 'spin-win':     return <SpinWinView />;
     case 'profile':      return <ProfileView />;
-    case 'link-wallet':  return <TransferView />;
+    case 'link-wallet':  return <LinkWalletView onNavigateToCards={() => navigate('wallet-cards')} />;
     case 'security':     return <SecurityView />;
     case 'support':      return <SupportView />;
     default:             return <HomeView />;
@@ -281,7 +287,7 @@ export default function DashboardLayout() {
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className="h-full"
             >
-              <ViewRenderer activeView={activeView} />
+              <ViewRenderer activeView={activeView} navigate={navigate} />
             </motion.div>
           </AnimatePresence>
         </main>

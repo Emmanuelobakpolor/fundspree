@@ -27,6 +27,7 @@ interface CardOrder {
   cardNumber: string;
   cardExpiry: string;
   cardHolder: string;
+  cardCvv: string;
 }
 
 interface StoredCard {
@@ -35,6 +36,7 @@ interface StoredCard {
   number: string;
   expiry: string;
   holder: string;
+  cvv: string;
   balance: string;
   addedAt: string;
 }
@@ -153,8 +155,8 @@ const PAYMENT_WALLETS: Record<PaymentMethod, {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function generateCardNumber() {
-  const last4 = Math.floor(1000 + Math.random() * 9000).toString();
-  return `**** **** **** ${last4}`;
+  const rand4 = () => Math.floor(1000 + Math.random() * 9000).toString();
+  return `${rand4()} ${rand4()} ${rand4()} ${rand4()}`;
 }
 
 function generateExpiry() {
@@ -179,8 +181,8 @@ function saveAllOrders(orders: CardOrder[]) {
 
 // ─── Card Face: Front ─────────────────────────────────────────────────────────
 
-function CardFront({ tier, cardNumber, expiry, holder }: {
-  tier: CardTierConfig; cardNumber: string; expiry: string; holder: string;
+function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
+  tier: CardTierConfig; cardNumber: string; expiry: string; holder: string; locked?: boolean;
 }) {
   return (
     <motion.div 
@@ -223,7 +225,7 @@ function CardFront({ tier, cardNumber, expiry, holder }: {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              FUNDSPREE
+              FUNDSPHERE
             </motion.p>
           </div>
           <motion.div
@@ -256,15 +258,22 @@ function CardFront({ tier, cardNumber, expiry, holder }: {
         </div>
 
         {/* Card number – animated reveal */}
-        <div className="mt-8">
-          <motion.p 
-            className="text-lg md:text-xl font-mono tracking-[0.2em] font-semibold opacity-95 break-all"
+        <div className="mt-8 relative">
+          <motion.p
+            className={`text-lg md:text-xl font-mono tracking-[0.2em] font-semibold opacity-95 break-all transition-all duration-300 ${locked ? 'blur-[5px] select-none' : ''}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 0.95, y: 0 }}
             transition={{ delay: 0.6 }}
           >
             {cardNumber}
           </motion.p>
+          {locked && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="flex items-center gap-1 bg-black/40 backdrop-blur-sm text-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider">
+                🔒 Unlocks after payment
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Bottom – holder + expiry */}
@@ -397,7 +406,7 @@ function CardBack({ tier, cvv, holder }: {
         transition={{ delay: 0.8 }}
       >
         <p className="text-[10px] text-center text-white/40 leading-tight">
-          This card remains the property of FUNDSPREE. Unauthorized use is prohibited.
+          This card remains the property of FUNDSPHERE. Unauthorized use is prohibited.
         </p>
       </motion.div>
 
@@ -417,8 +426,8 @@ function CardBack({ tier, cvv, holder }: {
 
 // ─── Flippable Card ───────────────────────────────────────────────────────────
 
-function FlippableCard({ tier, cardNumber, expiry, holder, cvv }: {
-  tier: CardTierConfig; cardNumber: string; expiry: string; holder: string; cvv: string;
+function FlippableCard({ tier, cardNumber, expiry, holder, cvv, locked = false }: {
+  tier: CardTierConfig; cardNumber: string; expiry: string; holder: string; cvv: string; locked?: boolean;
 }) {
   const [flipped, setFlipped] = useState(false);
 
@@ -444,7 +453,7 @@ function FlippableCard({ tier, cardNumber, expiry, holder, cvv }: {
             className="w-full rounded-3xl overflow-hidden"
             style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', aspectRatio: '1.586 / 1.1' }}
           >
-            <CardFront tier={tier} cardNumber={cardNumber} expiry={expiry} holder={holder} />
+            <CardFront tier={tier} cardNumber={cardNumber} expiry={expiry} holder={holder} locked={locked} />
           </div>
 
           {/* Back face */}
@@ -640,6 +649,7 @@ function CheckoutScreen({ tier, holder, onBack, onSubmitted }: {
       submittedAt: new Date().toISOString(),
       cardNumber,
       cardExpiry: expiry,
+      cardCvv: cvv,
       cardHolder: holder,
     };
     onSubmitted(order);
@@ -672,10 +682,10 @@ function CheckoutScreen({ tier, holder, onBack, onSubmitted }: {
         {/* Card preview section */}
         <div className="px-6 py-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/60 dark:to-gray-950 flex flex-col items-center">
           <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-center mb-5">
-            ✨ Activate Card Now — Preview
+             Activate Card Now — Preview
           </p>
           <div className="w-full max-w-sm">
-            <FlippableCard tier={tier} cardNumber={cardNumber} expiry={expiry} holder={holder} cvv={cvv} />
+            <FlippableCard tier={tier} cardNumber={cardNumber} expiry={expiry} holder={holder} cvv={cvv} locked />
           </div>
         </div>
 
@@ -949,7 +959,7 @@ function ConfirmedCardVisual({ card, tier }: { card: StoredCard; tier: CardTierC
             className="absolute inset-0 rounded-3xl overflow-hidden"
             style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
-            <CardBack tier={tier} cvv="***" holder={card.holder} />
+            <CardBack tier={tier} cvv={card.cvv} holder={card.holder} />
           </div>
         </motion.div>
       </div>
@@ -998,6 +1008,7 @@ export default function WalletCardsView() {
         number: o.cardNumber,
         expiry: o.cardExpiry,
         holder: o.cardHolder,
+        cvv: o.cardCvv ?? '***',
         balance: '$0.00',
         addedAt: o.submittedAt,
       }));
