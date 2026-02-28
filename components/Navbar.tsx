@@ -33,7 +33,8 @@ export default function Navbar() {
     }
     
     // Redirect to verification page if authenticated and haven't seen the screen yet
-    if (isAuthenticated && !isVerificationScreenSeen && window.location.pathname !== '/verification') {
+    // but don't redirect if already on dashboard
+    if (isAuthenticated && !isVerificationScreenSeen && window.location.pathname !== '/verification' && !window.location.pathname.startsWith('/dashboard')) {
       window.location.href = '/verification';
     }
     

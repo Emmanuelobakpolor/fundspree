@@ -6,11 +6,13 @@ interface User {
   id: string;
   email: string;
   name: string;
+  welcomeBonus: number;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isVerificationScreenSeen, setIsVerificationScreenSeen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('fundspree_user');
@@ -37,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('fundspree_verification_seen');
       }
     }
+    setIsLoading(false);
   }, []);
 
   const markVerificationScreenSeen = () => {
@@ -54,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: existingUser.id,
           email: existingUser.email,
           name: existingUser.name,
+          welcomeBonus: existingUser.welcomeBonus ?? 10,
         };
         setUser(userData);
         localStorage.setItem('fundspree_user', JSON.stringify(userData));
@@ -80,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name,
         email,
         password,
+        welcomeBonus: 10,
         createdAt: new Date().toISOString(),
       };
 
@@ -90,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
+        welcomeBonus: newUser.welcomeBonus,
       };
       setUser(userData);
       localStorage.setItem('fundspree_user', JSON.stringify(userData));
@@ -111,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        isLoading,
         login,
         register,
         logout,

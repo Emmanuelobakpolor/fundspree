@@ -35,9 +35,10 @@ type ViewId =
   | 'loans'
   | 'spin-win'
   | 'profile'
-  | 'transfer'
+  | 'link-wallet'
   | 'security'
   | 'support';
+
 
 interface NavItem {
   id: ViewId;
@@ -47,14 +48,15 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'wallet-cards', label: 'Wallet Cards', icon: CreditCard },
+   { id: 'link-wallet', label: 'Link Wallet', icon: ArrowLeftRight },
   { id: 'loans', label: 'Loans', icon: Banknote },
   { id: 'spin-win', label: 'Spin & Win', icon: Gift },
+    { id: 'wallet-cards', label: 'Wallet Cards', icon: CreditCard },
+
 ];
 
 const settingsNav: NavItem[] = [
   { id: 'profile', label: 'Profile Setting', icon: UserCircle },
-  { id: 'transfer', label: 'Transfer Balance', icon: ArrowLeftRight },
   { id: 'security', label: '2FA Security', icon: ShieldCheck },
   { id: 'support', label: 'Support Ticket', icon: HeadphonesIcon },
 ];
@@ -65,7 +67,7 @@ const viewTitles: Record<ViewId, string> = {
   loans: 'Loans',
   'spin-win': 'Spin & Win',
   profile: 'Profile Setting',
-  transfer: 'Transfer Balance',
+  'link-wallet': 'Link Wallet',
   security: '2FA Security',
   support: 'Support Ticket',
 };
@@ -77,7 +79,7 @@ function ViewRenderer({ activeView }: { activeView: ViewId }) {
     case 'loans':        return <LoansView />;
     case 'spin-win':     return <SpinWinView />;
     case 'profile':      return <ProfileView />;
-    case 'transfer':     return <TransferView />;
+    case 'link-wallet':  return <TransferView />;
     case 'security':     return <SecurityView />;
     case 'support':      return <SupportView />;
     default:             return <HomeView />;

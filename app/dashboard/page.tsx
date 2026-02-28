@@ -6,15 +6,16 @@ import { useAuth } from '../../components/AuthContext';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
 
 export default function DashboardPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
+  if (isLoading) return null;
   if (!isAuthenticated) return null;
 
   return <DashboardLayout />;
