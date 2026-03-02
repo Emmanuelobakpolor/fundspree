@@ -1,8 +1,20 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { motion, useAnimation } from 'framer-motion';
-import { Gift, Trophy, Clock, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, useAnimation, AnimatePresence } from 'framer-motion';
+import { Gift, Trophy, Clock, Star, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../AuthContext';
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
+type CardTier = 'gold' | 'platinum' | 'business';
+
+// ─── Config ─────────────────────────────────────────────────────────────────────
+
+const TIER_SPIN_LIMITS: Record<Exclude<CardTier, 'gold'>, number> = {
+  platinum: 2,
+  business: 5,
+};
 
 const prizes = [
   { label: '$0', color: '#1a1a1a' },
@@ -21,18 +33,89 @@ const leaderboard = [
   { rank: 3, name: 'John****', prize: '$5', date: '2 days ago' },
 ];
 
-export default function SpinWinView() {
+// ─── localStorage helpers ───────────────────────────────────────────────────────
+
+function getUserHighestCardTier(userId: string): CardTier | null {
+  try {
+    const orders = JSON.parse(localStorage.getItem('fundspree_card_orders') || '[]');
+    const confirmed = orders.filter(
+      (o: { userId: string; status: string }) => o.userId === userId && o.status === 'confirmed'
+    );
+    if (confirmed.length === 0) return null;
+    for (const tier of ['business', 'platinum', 'gold'] as CardTier[]) {
+      if (confirmed.some((o: { tier: string }) => o.tier === tier)) return tier;
+    }
+    return 'gold';
+  } catch {
+    return null;
+  }
+}
+
+function getTodayString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getSpinsUsedToday(userId: string): number {
+  try {
+    const data = JSON.parse(localStorage.getItem(`fundspree_spins_${userId}`) || '{}');
+    return data.date === getTodayString() ? (data.used ?? 0) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function setSpinsUsedToday(userId: string, used: number) {
+  localStorage.setItem(
+    `fundspree_spins_${userId}`,
+    JSON.stringify({ date: getTodayString(), used })
+  );
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────────────
+
+export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: { onNavigateToCards?: () => void }) {
+  const { user } = useAuth();
+
+  const [cardTier, setCardTier] = useState<CardTier | null>(null);
+  const [spinsLeft, setSpinsLeft] = useState(0);
+  const [maxSpins, setMaxSpins] = useState(0);
   const [spinning, setSpinning] = useState(false);
-  const [spinsLeft, setSpinsLeft] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(null);
+  const [totalWon, setTotalWon] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const controls = useAnimation();
 
+  useEffect(() => {
+    if (!user) return;
+    const tier = getUserHighestCardTier(user.id);
+    setCardTier(tier);
+    if (tier && tier !== 'gold') {
+      const max = TIER_SPIN_LIMITS[tier as 'platinum' | 'business'];
+      const used = getSpinsUsedToday(user.id);
+      setMaxSpins(max);
+      setSpinsLeft(Math.max(0, max - used));
+    }
+  }, [user]);
+
   const spinWheel = async () => {
-    if (spinning || spinsLeft <= 0) return;
-    setResult(null);
+    if (!user) return;
+    setError(null);
+
+    // ── Card / tier checks ──
+    if (!cardTier) {
+      return setError('You need an active FundSphere card to use Spin & Win. Purchase a Platinum or Business card from Wallet Cards.');
+    }
+    if (cardTier === 'gold') {
+      return setError('Your Gold card does not include Spin & Win access. Upgrade to a Platinum or Business card.');
+    }
+    if (spinning) return;
+    if (spinsLeft <= 0) return;
+
     setSpinning(true);
-    setSpinsLeft((s) => s - 1);
+    const used = getSpinsUsedToday(user.id);
+    setSpinsUsedToday(user.id, used + 1);
+    setSpinsLeft(s => s - 1);
 
     const extraSpins = 5 + Math.random() * 5;
     const sliceAngle = 360 / prizes.length;
@@ -45,12 +128,20 @@ export default function SpinWinView() {
     });
 
     setRotation(targetAngle);
-    setResult(prizes[prizeIndex].label);
+    const prize = prizes[prizeIndex];
+    setResult(prize.label);
+
+    const value = parseFloat(prize.label.replace('$', ''));
+    if (!isNaN(value) && value > 0) setTotalWon(prev => prev + value);
+
     setSpinning(false);
   };
 
   const RADIUS = 120;
   const CENTER = 130;
+
+  // Eligible = has platinum or business
+  const isEligible = cardTier === 'platinum' || cardTier === 'business';
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto">
@@ -61,13 +152,61 @@ export default function SpinWinView() {
           <Gift size={14} className="text-gold" />
           <span className="text-xs font-semibold text-gold">Daily Spin Reward</span>
         </div>
-        <h2 className="text-2xl font-bold text-black dark:text-white">Spin & Win</h2>
-        <p className="text-sm text-gray-500 mt-1">You have <span className="font-semibold text-gold">{spinsLeft}</span> spin{spinsLeft !== 1 ? 's' : ''} remaining today</p>
+        <h2 className="text-2xl font-bold text-black dark:text-white">Spin &amp; Win</h2>
+
+        {isEligible ? (
+          <>
+            <p className="text-sm text-gray-500 mt-1">
+              You have{' '}
+              <span className="font-semibold text-gold">{spinsLeft}</span>
+              {' '}of{' '}
+              <span className="font-semibold text-gold">{maxSpins}</span>
+              {' '}spin{maxSpins !== 1 ? 's' : ''} remaining today
+            </p>
+            {/* Spin dots */}
+            <div className="flex items-center justify-center gap-2 mt-2">
+              {Array.from({ length: maxSpins }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    i < spinsLeft
+                      ? 'bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.6)]'
+                      : 'bg-gray-200 dark:bg-white/10'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-gray-400 mt-1">
+            Platinum: <span className="text-gold font-semibold">2 spins/day</span>
+            {' · '}
+            Business: <span className="text-gold font-semibold">5 spins/day</span>
+          </p>
+        )}
       </div>
 
-      {/* Wheel */}
+      {/* Error Banner */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/25"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+          >
+            <AlertCircle size={18} className="text-red-500 dark:text-red-400 flex-shrink-0" />
+            <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Wheel — always visible */}
       <div className="flex flex-col items-center gap-6">
-        <div className="relative" style={{ width: CENTER * 2, height: CENTER * 2 }}>
+        <div
+          className={`relative transition-opacity duration-300 ${!isEligible ? 'opacity-50' : ''}`}
+          style={{ width: CENTER * 2, height: CENTER * 2 }}
+        >
           {/* Pointer */}
           <div
             className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10"
@@ -103,12 +242,9 @@ export default function SpinWinView() {
                     strokeWidth="1.5"
                   />
                   <text
-                    x={lx}
-                    y={ly}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="10"
-                    fontWeight="700"
+                    x={lx} y={ly}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fontSize="10" fontWeight="700"
                     fill={prize.color === '#D4AF37' || prize.color === '#B8860B' ? '#000' : '#fff'}
                     transform={`rotate(${i * sliceAngle + sliceAngle / 2}, ${lx}, ${ly})`}
                   >
@@ -117,38 +253,45 @@ export default function SpinWinView() {
                 </g>
               );
             })}
-            {/* Center circle */}
             <circle cx={CENTER} cy={CENTER} r={20} fill="#D4AF37" />
             <circle cx={CENTER} cy={CENTER} r={14} fill="#B8860B" />
           </motion.svg>
         </div>
 
         {/* Result */}
-        {result && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-center"
-          >
-            <p className="text-2xl font-bold text-black dark:text-white">
-              {result === 'Try Again' ? '😅 Try Again!' : `🎉 You won ${result}!`}
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              {result === 'Try Again' ? 'Better luck next time.' : 'Credited to your FundSphere wallet.'}
-            </p>
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {result && (
+            <motion.div
+              key={result + rotation}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              <p className="text-2xl font-bold text-black dark:text-white">
+                {result === 'Try Again' ? '😅 Try Again!' : `🎉 You won ${result}!`}
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                {result === 'Try Again' ? 'Better luck next time.' : 'Credited to your FundSphere wallet.'}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <button
           onClick={spinWheel}
-          disabled={spinning || spinsLeft <= 0}
+          disabled={spinning || (isEligible && spinsLeft <= 0)}
           className="px-10 py-3.5 rounded-2xl bg-gold-gradient text-black font-bold text-sm gold-glow hover:opacity-90 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {spinning ? 'Spinning...' : spinsLeft <= 0 ? 'Come Back Tomorrow' : 'Spin Now'}
+          {spinning
+            ? 'Spinning...'
+            : isEligible && spinsLeft <= 0
+            ? 'Come Back Tomorrow'
+            : 'Spin Now'}
         </button>
       </div>
 
-      {/* Spins info */}
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-4 text-center">
           <Clock size={18} className="text-gold mx-auto mb-1" />
@@ -158,7 +301,7 @@ export default function SpinWinView() {
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-4 text-center">
           <Star size={18} className="text-gold mx-auto mb-1" />
           <p className="text-xs text-gray-400">Total Won</p>
-          <p className="font-bold text-black dark:text-white text-sm mt-0.5">$0.00</p>
+          <p className="font-bold text-black dark:text-white text-sm mt-0.5">${totalWon.toFixed(2)}</p>
         </div>
       </div>
 
@@ -166,7 +309,7 @@ export default function SpinWinView() {
       <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-5">
         <div className="flex items-center gap-2 mb-4">
           <Trophy size={16} className="text-gold" />
-          <p className="font-semibold text-black dark:text-white">Today's Winners</p>
+          <p className="font-semibold text-black dark:text-white">Today&apos;s Winners</p>
         </div>
         <div className="space-y-3">
           {leaderboard.map((entry) => (
@@ -183,6 +326,7 @@ export default function SpinWinView() {
           ))}
         </div>
       </div>
+
     </div>
   );
 }

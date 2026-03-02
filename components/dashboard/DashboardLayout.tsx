@@ -82,8 +82,8 @@ function ViewRenderer({
   switch (activeView) {
     case 'dashboard':    return <HomeView />;
     case 'wallet-cards': return <WalletCardsView />;
-    case 'loans':        return <LoansView />;
-    case 'spin-win':     return <SpinWinView />;
+    case 'loans':        return <LoansView onNavigateToCards={() => navigate('wallet-cards')} />;
+    case 'spin-win':     return <SpinWinView onNavigateToCards={() => navigate('wallet-cards')} />;
     case 'profile':      return <ProfileView />;
     case 'link-wallet':  return <LinkWalletView onNavigateToCards={() => navigate('wallet-cards')} />;
     case 'security':     return <SecurityView />;

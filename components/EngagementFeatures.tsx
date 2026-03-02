@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Star, Zap, Building2 } from 'lucide-react';
 
 function TrophyIcon() {
   return (
@@ -12,27 +12,61 @@ function TrophyIcon() {
   );
 }
 
-const tiers = [
+const cardTiers = [
   {
-    name: "Standard Tier",
-    amount: "$70,000",
-    description: "Ideal for everyday users building credit leverage.",
-    features: ["Basic support", "Standard debit card", "1% Cashback"],
+    name: 'Gold Card',
+    tagline: 'Everyday premium spending',
+    price: '1,050 USD',
+    badge: 'Entry',
+    Icon: Star,
     highlight: false,
+    accentColor: 'text-amber-500',
+    badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+    borderColor: 'border-amber-200/60 dark:border-amber-500/20',
+    iconBg: 'bg-amber-50 dark:bg-amber-500/10',
+    features: [
+      'Virtual Visa debit card',
+      'Priority support (email + chat)',
+      'Up to $70,000 monthly withdrawal',
+      'No loan access',
+      'No Spin & Win access',
+    ],
   },
   {
-    name: "Premium Tier",
-    amount: "$200,000",
-    description: "Higher limits with priority financial access.",
-    features: ["Priority support", "Premium card", "3% Cashback"],
+    name: 'Platinum Card',
+    tagline: 'Elevated freedom & rewards',
+    price: '2,500 USD',
+    badge: 'Most Popular',
+    Icon: Zap,
     highlight: true,
+    accentColor: 'text-gray-700 dark:text-gray-300',
+    badgeColor: 'bg-gold text-black',
+    borderColor: 'border-gray-300/60 dark:border-gray-500/30',
+    iconBg: 'bg-gray-100 dark:bg-gray-500/20',
+    features: [
+      'All Gold benefits',
+      'Up to $300,000 monthly withdrawal',
+      'Up to $2,000 credit line (loans)',
+      'Spin & Win — 2 spins/day',
+    ],
   },
   {
-    name: "Unlimited Tier",
-    amount: "Unlimited",
-    description: "Maximum capital access for elite clients.",
-    features: ["Concierge service", "Private events", "5% Cashback"],
+    name: 'Business Card',
+    tagline: 'Enterprise-grade power',
+    price: '8,000 USD',
+    badge: 'Premium',
+    Icon: Building2,
     highlight: false,
+    accentColor: 'text-indigo-600 dark:text-indigo-400',
+    badgeColor: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
+    borderColor: 'border-indigo-200/60 dark:border-indigo-500/20',
+    iconBg: 'bg-indigo-50 dark:bg-indigo-500/10',
+    features: [
+      'All Platinum benefits',
+      'Unlimited withdrawals',
+      'Up to $8,000 credit line (loans)',
+      'Spin & Win — 5 spins/day',
+    ],
   },
 ];
 
@@ -95,7 +129,7 @@ export default function EngagementFeatures() {
                   <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-white relative">
 
                     {/* reward labels */}
-                    {["$100", "$250", "$500", "$1,000", "$200", "$750"].map((reward, i) => (
+                    {["$100", "$0", "$500", "$1,000", "$200", "$750"].map((reward, i) => (
                       <div
                         key={i}
                         className="absolute text-sm font-semibold text-gold"
@@ -131,68 +165,72 @@ export default function EngagementFeatures() {
 
         </div>
 
-        {/* ===== LOAN TIERS ===== */}
-        <div id="loans" className="pt-16 border-t border-gray-200/50 dark:border-gray-800">
+        {/* ===== CARD TIERS ===== */}
+        <div id="cards" className="pt-16 border-t border-gray-200/50 dark:border-gray-800">
 
           <div className="text-center mb-14">
             <h2 className="text-4xl font-semibold mb-4 dark:text-white">
-              Tiered <span className="text-gold">Loan Access</span>
+              Choose Your <span className="text-gold">Card</span>
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              Flexible capital access designed around your financial profile.
+              Select a card tier that matches your lifestyle and financial goals.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-            {tiers.map((tier, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className={`relative p-8 rounded-[2rem] backdrop-blur-xl border border-white/10
-                ${tier.highlight
-                    ? 'scale-[1.03] z-10 bg-white dark:bg-gray-900 shadow-2xl'
-                    : 'bg-white/70 dark:bg-white/5'
-                  } transition-all hover:-translate-y-2`}
-              >
-
-                {tier.highlight && (
-                  <div className="absolute top-6 right-6 text-xs font-bold px-3 py-1 rounded-full bg-gold text-black">
-                    Most Popular
+            {cardTiers.map((tier, index) => {
+              const Icon = tier.Icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`relative p-8 rounded-[2rem] backdrop-blur-xl border ${tier.borderColor}
+                  ${tier.highlight
+                      ? 'scale-[1.03] z-10 bg-white dark:bg-gray-900 shadow-2xl'
+                      : 'bg-white/70 dark:bg-white/5'
+                    } transition-all hover:-translate-y-2`}
+                >
+                  {/* Badge */}
+                  <div className={`absolute top-6 right-6 text-xs font-bold px-3 py-1 rounded-full ${tier.badgeColor}`}>
+                    {tier.badge}
                   </div>
-                )}
 
-                <h3 className="text-xl font-semibold mb-2 dark:text-white">
-                  {tier.name}
-                </h3>
+                  {/* Icon + name */}
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${tier.iconBg}`}>
+                      <Icon size={20} className={tier.accentColor} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-black dark:text-white">{tier.name}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{tier.tagline}</p>
+                    </div>
+                  </div>
 
-                <div className="text-4xl font-bold mb-4 text-gold">
-                  {tier.amount}
-                </div>
+                  {/* Price */}
+                  <div className={`text-3xl font-black mb-6 ${tier.accentColor}`}>
+                    {tier.price}
+                  </div>
 
-                <p className="text-gray-600 dark:text-gray-400 mb-8 text-sm">
-                  {tier.description}
-                </p>
+                  {/* Features */}
+                  <ul className="space-y-3 mb-10">
+                    {tier.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                        <span className={`mt-0.5 font-bold text-xs ${tier.accentColor}`}>✓</span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
 
-                <ul className="space-y-3 mb-10">
-                  {tier.features.map((feature, i) => (
-                    <li key={i} className="text-sm text-gray-700 dark:text-gray-300">
-                      • {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <button className="w-full py-3 rounded-full font-semibold bg-black dark:bg-white/10 text-white hover:bg-gold hover:text-black transition-all flex items-center justify-center space-x-2">
-                  <span>Apply Now</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-
-              </motion.div>
-            ))}
-
+                  <button className="w-full py-3 rounded-full font-semibold bg-black dark:bg-white/10 text-white hover:bg-gold hover:text-black transition-all flex items-center justify-center space-x-2">
+                    <span>Get Started</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 

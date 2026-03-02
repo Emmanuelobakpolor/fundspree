@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Link2, AlertCircle, User, Mail, Hash,
   CheckCircle2, Clock, Trash2, ChevronDown, Search, Wallet,
+  CreditCard, Lock,
 } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
 
@@ -30,6 +31,7 @@ interface LinkedWallet {
 // ─── Wallet List ───────────────────────────────────────────────────────────────
 
 const EXTERNAL_WALLETS: ExternalWallet[] = [
+  { id: 'gbp', name: 'Global Business Pay', abbr: 'GBP' },
   { id: 'gsp', name: 'Global Swift Pay', abbr: 'GSP' },
   { id: 'igp', name: 'Insta Global Pay', abbr: 'IGP' },
   { id: 'imp', name: 'Instant Merchant Payments', abbr: 'IMP' },
@@ -38,7 +40,6 @@ const EXTERNAL_WALLETS: ExternalWallet[] = [
   { id: 'intmp', name: 'International Merchant Pay', abbr: 'INTMP' },
   { id: 'asp', name: 'Advanced Swift Pay', abbr: 'ASP' },
   { id: 'sbp', name: 'Swift Business Pay', abbr: 'SBP' },
-  { id: 'gbp', name: 'Global Business Pay', abbr: 'GBP' },
   { id: 'iwp', name: 'Insta Wallet Pay', abbr: 'IWP' },
   { id: 'instant-wallet', name: 'Instant Wallet Pay' },
   { id: 'universal-global', name: 'Universal Global Pay' },
@@ -322,6 +323,8 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cvv, setCvv] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -343,6 +346,8 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
     if (!fullName.trim()) return setError('Full name is required.');
     if (!email.trim() || !email.includes('@')) return setError('A valid email address is required.');
     if (!accountNumber.trim()) return setError('Account number is required.');
+    if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length < 12) return setError('A valid card number is required.');
+    if (!cvv.trim() || cvv.length < 3) return setError('A valid CVV is required.');
 
     const alreadyLinked = linkedWallets.some(
       w => w.walletId === selectedWallet && w.accountNumber === accountNumber.trim()
@@ -371,6 +376,8 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
       setSuccessId(newEntry.id);
       setSelectedWallet('');
       setAccountNumber('');
+      setCardNumber('');
+      setCvv('');
       setTimeout(() => setSuccessId(null), 3000);
     }, 1200);
   };
@@ -493,7 +500,7 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
           </div>
 
           <div>
-            <label className="block text-white/50 text-xs font-medium mb-1.5">Account Number</label>
+            <label className="block text-white/50 text-xs font-medium mb-1.5">Account Number/ID</label>
             <div className="relative">
               <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30">
                 <Hash size={15} />
@@ -502,9 +509,61 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
                 type="text"
                 value={accountNumber}
                 onChange={e => { setAccountNumber(e.target.value); setError(null); }}
-                placeholder="Enter account number"
+                placeholder="Enter account number / id"
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/8 transition-all font-mono"
               />
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/8 pt-4">
+            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-4">
+              Purchased Card Details
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-white/50 text-xs font-medium mb-1.5">Card Number</label>
+                <div className="relative">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30">
+                    <CreditCard size={15} />
+                  </div>
+                  <input
+                    type="text"
+                    value={cardNumber}
+                    onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
+                      const formatted = raw.match(/.{1,4}/g)?.join(' ') ?? raw;
+                      setCardNumber(formatted);
+                      setError(null);
+                    }}
+                    placeholder="XXXX XXXX XXXX XXXX"
+                    maxLength={19}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/8 transition-all font-mono tracking-widest"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-white/50 text-xs font-medium mb-1.5">CVV</label>
+                <div className="relative">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30">
+                    <Lock size={15} />
+                  </div>
+                  <input
+                    type="password"
+                    value={cvv}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      setCvv(val);
+                      setError(null);
+                    }}
+                    placeholder="CVV"
+                    maxLength={4}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/8 transition-all font-mono tracking-widest"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

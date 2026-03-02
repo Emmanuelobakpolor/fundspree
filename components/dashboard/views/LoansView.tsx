@@ -1,167 +1,478 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Banknote, Clock, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Banknote, AlertCircle, CheckCircle2, Clock,
+  ChevronDown, TrendingUp, Shield, Star, Zap, Building2,
+} from 'lucide-react';
+import { useAuth } from '../../AuthContext';
 
-const loanOptions = [
-  { amount: '$500', interest: '3.5%', duration: '3 months', monthly: '$170.83' },
-  { amount: '$1,000', interest: '4.0%', duration: '6 months', monthly: '$170.00' },
-  { amount: '$2,500', interest: '4.5%', duration: '12 months', monthly: '$218.75' },
-  { amount: '$5,000', interest: '5.0%', duration: '24 months', monthly: '$218.75' },
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
+type CardTier = 'gold' | 'platinum' | 'business';
+
+interface LoanApplication {
+  id: string;
+  userId: string;
+  amount: number;
+  purpose: string;
+  tier: CardTier;
+  status: 'pending' | 'approved' | 'rejected';
+  appliedAt: string;
+}
+
+// ─── Config ─────────────────────────────────────────────────────────────────────
+
+const TIER_LOAN_LIMITS: Record<Exclude<CardTier, 'gold'>, number> = {
+  platinum: 2000,
+  business: 8000,
+};
+
+const LOAN_PLANS = [
+  { amount: 500,  interest: '3.5%', duration: '3 months',  monthly: '$170.83' },
+  { amount: 1000, interest: '4.0%', duration: '6 months',  monthly: '$170.00' },
+  { amount: 2000, interest: '4.5%', duration: '12 months', monthly: '$174.17' },
+  { amount: 8000, interest: '5.0%', duration: '24 months', monthly: '$346.67' },
 ];
 
-export default function LoansView() {
-  const [selectedLoan, setSelectedLoan] = useState<number | null>(null);
-  const [amount, setAmount] = useState('');
+const PURPOSES = [
+  { value: 'business', label: 'Business Expansion' },
+  { value: 'personal', label: 'Personal' },
+  { value: 'education', label: 'Education' },
+  { value: 'medical', label: 'Medical' },
+  { value: 'travel', label: 'Travel' },
+  { value: 'other', label: 'Other' },
+];
+
+const CARD_TIER_INFO = [
+  {
+    id: 'gold',
+    name: 'Gold Card',
+    tagline: 'Everyday premium spending',
+    price: '1,050 USD',
+    badge: 'Entry',
+    Icon: Star,
+    iconBg: 'bg-amber-100 dark:bg-amber-500/20',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    nameColor: 'text-amber-700 dark:text-amber-400',
+    bg: 'bg-amber-50 dark:bg-amber-500/5',
+    border: 'border-amber-200 dark:border-amber-500/20',
+    badgeBg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+    checkColor: 'text-amber-500',
+    features: [
+      'Virtual Visa debit card',
+      'Priority support (email + chat)',
+      'Up to $70,000 monthly withdrawal',
+      'No loan access',
+      'No Spin & Win access',
+    ],
+  },
+  {
+    id: 'platinum',
+    name: 'Platinum Card',
+    tagline: 'Elevated freedom & rewards',
+    price: '2,500 USD',
+    badge: 'Most Popular',
+    Icon: Zap,
+    iconBg: 'bg-gray-100 dark:bg-gray-500/20',
+    iconColor: 'text-gray-600 dark:text-gray-300',
+    nameColor: 'text-gray-700 dark:text-gray-300',
+    bg: 'bg-gray-50 dark:bg-gray-500/5',
+    border: 'border-gray-200 dark:border-gray-500/20',
+    badgeBg: 'bg-gray-200 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300',
+    checkColor: 'text-gray-500',
+    features: [
+      'All Gold benefits',
+      'Up to $300,000 monthly withdrawal',
+      'Up to $2,000 credit line (loans)',
+      'Spin & Win — 2 spins/day',
+    ],
+  },
+  {
+    id: 'business',
+    name: 'Business Card',
+    tagline: 'Enterprise-grade power',
+    price: '8,000 USD',
+    badge: 'Premium',
+    Icon: Building2,
+    iconBg: 'bg-indigo-100 dark:bg-indigo-500/20',
+    iconColor: 'text-indigo-600 dark:text-indigo-400',
+    nameColor: 'text-indigo-700 dark:text-indigo-400',
+    bg: 'bg-indigo-50 dark:bg-indigo-500/5',
+    border: 'border-indigo-200 dark:border-indigo-500/20',
+    badgeBg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
+    checkColor: 'text-indigo-500',
+    features: [
+      'All Platinum benefits',
+      'Unlimited withdrawals',
+      'Up to $8,000 credit line (loans)',
+      'Spin & Win — 5 spins/day',
+    ],
+  },
+];
+
+// ─── localStorage helpers ───────────────────────────────────────────────────────
+
+function getUserHighestCardTier(userId: string): CardTier | null {
+  try {
+    const orders = JSON.parse(localStorage.getItem('fundspree_card_orders') || '[]');
+    const confirmed = orders.filter(
+      (o: { userId: string; status: string }) => o.userId === userId && o.status === 'confirmed'
+    );
+    if (confirmed.length === 0) return null;
+    for (const tier of ['business', 'platinum', 'gold'] as CardTier[]) {
+      if (confirmed.some((o: { tier: string }) => o.tier === tier)) return tier;
+    }
+    return 'gold';
+  } catch {
+    return null;
+  }
+}
+
+function loadLoanApplications(): LoanApplication[] {
+  try {
+    return JSON.parse(localStorage.getItem('fundspree_loan_applications') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveLoanApplications(apps: LoanApplication[]): void {
+  localStorage.setItem('fundspree_loan_applications', JSON.stringify(apps));
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────────────
+
+export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { onNavigateToCards?: () => void }) {
+  const { user } = useAuth();
+
+  const [cardTier, setCardTier] = useState<CardTier | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [purpose, setPurpose] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [successId, setSuccessId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [myLoans, setMyLoans] = useState<LoanApplication[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    setCardTier(getUserHighestCardTier(user.id));
+    const all = loadLoanApplications();
+    setMyLoans(all.filter(l => l.userId === user.id));
+  }, [user]);
+
+  const handleApply = () => {
+    if (!user) return;
+    setError(null);
+
+    // ── Card / tier checks ──
+    if (!cardTier) {
+      return setError('You need an active FundSphere card to apply for a loan. Purchase a Platinum or Business card from Wallet Cards.');
+    }
+    if (cardTier === 'gold') {
+      return setError('Your Gold card does not include loan access. Upgrade to a Platinum or Business card to apply.');
+    }
+    if (selectedPlan === null) return setError('Please select a loan plan.');
+    if (!purpose) return setError('Please select a loan purpose.');
+
+    const plan = LOAN_PLANS[selectedPlan];
+    const limit = TIER_LOAN_LIMITS[cardTier as 'platinum' | 'business'];
+    if (plan.amount > limit) {
+      return setError(
+        cardTier === 'platinum'
+          ? `Your Platinum card allows loans up to $2,000. Upgrade to Business for up to $8,000.`
+          : `Loan amount exceeds your card limit of $${limit.toLocaleString()}.`
+      );
+    }
+
+    setSubmitting(true);
+    setTimeout(() => {
+      const newApp: LoanApplication = {
+        id: `loan_${Date.now()}`,
+        userId: user.id,
+        amount: plan.amount,
+        purpose,
+        tier: cardTier as CardTier,
+        status: 'pending',
+        appliedAt: new Date().toISOString(),
+      };
+      const all = loadLoanApplications();
+      all.push(newApp);
+      saveLoanApplications(all);
+      setMyLoans(prev => [...prev, newApp]);
+      setSubmitting(false);
+      setSuccessId(newApp.id);
+      setSelectedPlan(null);
+      setPurpose('');
+      setTimeout(() => setSuccessId(null), 4000);
+    }, 1400);
+  };
+
+  // Tier label for the info badge
+  const tierLabel =
+    cardTier === 'business' ? 'Business' :
+    cardTier === 'platinum' ? 'Platinum' :
+    cardTier === 'gold' ? 'Gold' : null;
+
+  const tierLimit =
+    cardTier === 'platinum' ? '$2,000' :
+    cardTier === 'business' ? '$8,000' : null;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto">
+    <div className="px-4 pt-6 pb-24">
+      <div className="max-w-lg mx-auto space-y-6">
 
-      {/* Status Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-5"
-      >
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center">
-            <Banknote size={18} className="text-gold" />
-          </div>
-          <div>
-            <p className="font-semibold text-black dark:text-white">Active Loans</p>
-            <p className="text-xs text-gray-400">No active loans</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-100 dark:border-white/10 text-center">
-          {[
-            { label: 'Total Borrowed', value: '$0.00' },
-            { label: 'Outstanding', value: '$0.00' },
-            { label: 'Next Payment', value: '—' },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <p className="text-[11px] text-gray-400">{label}</p>
-              <p className="text-sm font-bold text-black dark:text-white mt-0.5">{value}</p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Loan Eligibility */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="rounded-2xl border border-amber-400/40 bg-amber-50 dark:bg-amber-400/10 p-4 flex gap-3 items-start"
-      >
-        <AlertCircle size={17} className="text-amber-500 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-            KYC Required for Loans
-          </p>
-          <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">
-            Complete your identity verification to unlock loan services.
-          </p>
-        </div>
-      </motion.div>
-
-      {/* Loan Plans */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <p className="font-semibold text-black dark:text-white mb-3">Available Loan Plans</p>
-        <div className="grid grid-cols-2 gap-3">
-          {loanOptions.map((opt, i) => (
-            <motion.button
-              key={i}
-              onClick={() => setSelectedLoan(i)}
-              whileTap={{ scale: 0.97 }}
-              className={`rounded-2xl p-4 text-left border transition-all ${
-                selectedLoan === i
-                  ? 'border-gold bg-gold/5 dark:bg-gold/10'
-                  : 'border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 hover:border-gold/40'
-              }`}
-            >
-              {selectedLoan === i && (
-                <CheckCircle2 size={14} className="text-gold mb-1.5" />
-              )}
-              <p className="text-xl font-bold text-black dark:text-white">{opt.amount}</p>
-              <p className="text-xs text-gray-500 mt-1">{opt.duration}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-gold font-semibold">{opt.interest} p.a.</span>
-                <span className="text-[11px] text-gray-400">{opt.monthly}/mo</span>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Application Form */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-5 space-y-4"
-      >
-        <p className="font-semibold text-black dark:text-white">Apply for a Loan</p>
-
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Loan Amount (USD)</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount"
-            className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black px-4 py-3 text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gold/50 transition"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Loan Purpose</label>
-          <div className="relative">
-            <select
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black px-4 py-3 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-gold/50 transition"
-            >
-              <option value="">Select purpose</option>
-              <option value="business">Business Expansion</option>
-              <option value="personal">Personal</option>
-              <option value="education">Education</option>
-              <option value="medical">Medical</option>
-            </select>
-            <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        <button
-          disabled
-          className="w-full py-3 rounded-xl bg-black dark:bg-gold text-white dark:text-black text-sm font-semibold opacity-50 cursor-not-allowed transition"
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
         >
-          Request Loan (KYC Required)
-        </button>
-      </motion.div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center shadow-[0_4px_20px_-4px_rgba(212,175,55,0.5)]">
+              <Banknote size={20} className="text-black" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Loans</h1>
+              <p className="text-gray-400 dark:text-white/40 text-xs">Apply for a loan based on your card tier</p>
+            </div>
+          </div>
+        </motion.div>
 
-      {/* Processing times */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-5"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <Clock size={15} className="text-gold" />
-          <p className="font-semibold text-black dark:text-white text-sm">Processing Info</p>
-        </div>
-        <div className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
-          <p>• Loan approval takes 24–48 hours after KYC verification</p>
-          <p>• Funds are disbursed directly to your FundSphere wallet</p>
-          <p>• Early repayment is allowed with no penalties</p>
-        </div>
-      </motion.div>
+        {/* Tier info badge — only when eligible */}
+        {tierLabel && tierLimit && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="flex items-center gap-3 p-4 rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/5"
+          >
+            <Shield size={18} className="text-[#D4AF37] flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-gray-900 dark:text-white text-sm font-semibold">{tierLabel} Card Active</p>
+              <p className="text-gray-400 dark:text-white/40 text-xs">Loan limit up to {tierLimit}</p>
+            </div>
+            <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/25 font-semibold">
+              {tierLabel}
+            </span>
+          </motion.div>
+        )}
+
+        {/* Success Banner */}
+        <AnimatePresence>
+          {successId && (
+            <motion.div
+              className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <CheckCircle2 size={20} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
+              <p className="text-emerald-700 dark:text-emerald-300 text-sm font-medium">
+                Loan application submitted! We&apos;ll review it within 24–48 hours.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error Banner */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/25"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <AlertCircle size={18} className="text-red-500 dark:text-red-400 flex-shrink-0" />
+              <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Loan Plans — always visible */}
+        <motion.div
+          className="rounded-3xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/[0.03] p-5"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <p className="text-gray-500 dark:text-white/60 text-xs font-semibold uppercase tracking-widest mb-4">
+            Select Loan Amount
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {LOAN_PLANS.map((plan, i) => {
+              const isSelected = selectedPlan === i;
+              // Dim plans the user's tier can't access
+              const outOfRange =
+                (cardTier === 'platinum' && plan.amount > TIER_LOAN_LIMITS.platinum) ||
+                (!cardTier || cardTier === 'gold');
+
+              return (
+                <motion.button
+                  key={plan.amount}
+                  onClick={() => { setSelectedPlan(i); setError(null); }}
+                  whileTap={{ scale: 0.97 }}
+                  className={`rounded-2xl p-4 text-left border transition-all duration-200 ${
+                    isSelected
+                      ? 'border-[#D4AF37]/50 bg-[#D4AF37]/5'
+                      : 'border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/[0.02] hover:border-[#D4AF37]/30'
+                  } ${outOfRange ? 'opacity-40' : ''}`}
+                >
+                  {isSelected && <CheckCircle2 size={13} className="text-[#D4AF37] mb-2" />}
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">${plan.amount.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400 dark:text-white/35 mt-0.5">{plan.duration}</p>
+                  <div className="mt-2.5 flex items-center justify-between">
+                    <span className="text-xs text-[#D4AF37] font-semibold">{plan.interest} p.a.</span>
+                    <span className="text-[11px] text-gray-400 dark:text-white/30">{plan.monthly}/mo</span>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Application Form — always visible */}
+        <motion.div
+          className="rounded-3xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/[0.03] p-5 space-y-4"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.17 }}
+        >
+          <p className="text-gray-500 dark:text-white/60 text-xs font-semibold uppercase tracking-widest">
+            Application Details
+          </p>
+
+          <div>
+            <label className="block text-gray-500 dark:text-white/50 text-xs font-medium mb-1.5">Loan Purpose</label>
+            <div className="relative">
+              <select
+                value={purpose}
+                onChange={e => { setPurpose(e.target.value); setError(null); }}
+                className="w-full appearance-none bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#D4AF37]/50 transition-all"
+              >
+                <option value="">Select purpose…</option>
+                {PURPOSES.map(p => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30 pointer-events-none" />
+            </div>
+          </div>
+
+          <motion.button
+            onClick={handleApply}
+            disabled={submitting}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_6px_28px_-6px_rgba(212,175,55,0.5)] hover:shadow-[0_8px_36px_-6px_rgba(212,175,55,0.7)] transition-all duration-300"
+            whileHover={!submitting ? { scale: 1.01 } : {}}
+            whileTap={!submitting ? { scale: 0.98 } : {}}
+          >
+            {submitting ? (
+              <><Clock size={16} className="animate-spin" />Submitting Application…</>
+            ) : (
+              <><Banknote size={16} />Apply for Loan</>
+            )}
+          </motion.button>
+        </motion.div>
+
+        {/* Card Tiers */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp size={15} className="text-[#D4AF37]" />
+            <p className="text-gray-500 dark:text-white/60 text-xs font-semibold uppercase tracking-widest">Card Tiers &amp; Loan Access</p>
+          </div>
+          <div className="space-y-3">
+            {CARD_TIER_INFO.map(tier => (
+              <div
+                key={tier.id}
+                className={`rounded-2xl border p-4 ${tier.bg} ${tier.border}`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${tier.iconBg}`}>
+                      <tier.Icon size={15} className={tier.iconColor} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-bold ${tier.nameColor}`}>{tier.name}</p>
+                      <p className="text-gray-400 dark:text-white/30 text-[11px]">{tier.tagline}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-sm font-black ${tier.nameColor}`}>{tier.price}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tier.badgeBg}`}>
+                      {tier.badge}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1.5 pt-3 border-t border-black/5 dark:border-white/8">
+                  {tier.features.map(f => (
+                    <div key={f} className="flex items-start gap-2">
+                      <span className={`mt-0.5 text-[10px] font-bold ${tier.checkColor}`}>✓</span>
+                      <p className="text-gray-500 dark:text-white/40 text-xs">{f}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* My Loan Applications */}
+        {myLoans.length > 0 && (
+          <motion.div
+            className="rounded-3xl border border-gray-200 dark:border-white/8 bg-white dark:bg-white/[0.03] p-5 space-y-3"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.27 }}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-gray-500 dark:text-white/60 text-xs font-semibold uppercase tracking-widest">My Applications</p>
+              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/25 font-medium">
+                {myLoans.length}
+              </span>
+            </div>
+            <AnimatePresence>
+              {myLoans.slice().reverse().map(loan => (
+                <motion.div
+                  key={loan.id}
+                  className="flex items-center gap-3 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/[0.02]"
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 12 }}
+                >
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37]/15 to-[#B8860B]/10 border border-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
+                    <Banknote size={14} className="text-[#D4AF37]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-900 dark:text-white font-medium text-sm">${loan.amount.toLocaleString()}</p>
+                    <p className="text-gray-400 dark:text-white/35 text-xs capitalize">{loan.purpose}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                      loan.status === 'approved'
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                        : loan.status === 'rejected'
+                        ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20'
+                        : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                    }`}>
+                      {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                    </span>
+                    <p className="text-gray-400 dark:text-white/25 text-[10px] mt-1">
+                      {new Date(loan.appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
+
+      </div>
     </div>
   );
 }

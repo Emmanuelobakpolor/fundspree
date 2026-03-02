@@ -103,7 +103,7 @@ const CARD_TIERS: CardTierConfig[] = [
     id: 'business',
     name: 'Business Card',
     tagline: 'Enterprise-grade power',
-    price: '5,000 USD',
+    price: '8,000 USD',
     gradient: 'from-indigo-900 via-indigo-800 to-indigo-700',
     icon: Building2,
     badge: 'Premium',
@@ -111,7 +111,7 @@ const CARD_TIERS: CardTierConfig[] = [
     features: [
       'All Platinum benefits',
       'Unlimited withdrawals',
-      'Up to $5,000 credit line',
+      'Up to $8,000 credit line',
       'Spin-to-win rewards (5 attempts)',
     ],
     cardGradient: 'from-indigo-950 via-indigo-900 to-indigo-800',
