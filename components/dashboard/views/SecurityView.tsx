@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldOff, Lock, Key, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { authFetch } from '../../../lib/api';
 
 export default function SecurityView() {
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
@@ -11,10 +12,51 @@ export default function SecurityView() {
   const [showPass, setShowPass] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [passSaved, setPassSaved] = useState(false);
+  const [passError, setPassError] = useState('');
+  const [passLoading, setPassLoading] = useState(false);
 
-  const handlePassSave = () => {
-    setPassSaved(true);
-    setTimeout(() => setPassSaved(false), 2500);
+  const handlePassSave = async () => {
+    setPassError('');
+
+    if (!passwords.current || !passwords.new || !passwords.confirm) {
+      setPassError('Please fill in all fields.');
+      return;
+    }
+    if (passwords.new !== passwords.confirm) {
+      setPassError('New passwords do not match.');
+      return;
+    }
+
+    setPassLoading(true);
+    try {
+      const res = await authFetch('/api/auth/change-password/', {
+        method: 'POST',
+        body: JSON.stringify({
+          current_password: passwords.current,
+          new_password: passwords.new,
+          confirm_password: passwords.confirm,
+        }),
+      });
+
+      if (res.ok) {
+        setPassSaved(true);
+        setPasswords({ current: '', new: '', confirm: '' });
+        setTimeout(() => setPassSaved(false), 2500);
+      } else {
+        const data = await res.json();
+        const msg =
+          data.current_password?.[0] ??
+          data.new_password?.[0] ??
+          data.confirm_password?.[0] ??
+          data.non_field_errors?.[0] ??
+          'Something went wrong.';
+        setPassError(msg);
+      }
+    } catch {
+      setPassError('Network error. Please try again.');
+    } finally {
+      setPassLoading(false);
+    }
   };
 
   return (
@@ -126,12 +168,17 @@ export default function SecurityView() {
           </div>
         ))}
 
+        {passError && (
+          <p className="text-xs text-red-500">{passError}</p>
+        )}
+
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handlePassSave}
-          className="w-full py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold text-sm hover:opacity-80 transition flex items-center justify-center gap-2"
+          disabled={passLoading}
+          className="w-full py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold text-sm hover:opacity-80 transition flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          {passSaved ? <><CheckCircle2 size={16} /> Updated!</> : 'Update Password'}
+          {passSaved ? <><CheckCircle2 size={16} /> Updated!</> : passLoading ? 'Updating…' : 'Update Password'}
         </motion.button>
       </motion.div>
 

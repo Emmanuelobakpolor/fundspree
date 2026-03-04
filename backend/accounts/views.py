@@ -12,6 +12,7 @@ from .serializers import (
     RegisterSerializer, UserSerializer, LoginSerializer,
     UpdateProfileSerializer, AdminFundSerializer,
     KYCSubmissionSerializer, KYCSubmitSerializer,
+    ChangePasswordSerializer,
 )
 
 
@@ -99,6 +100,26 @@ class ProfileView(APIView):
         user = request.user
         user.delete()
         return Response({"message": "Account deleted."}, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not user.check_password(serializer.validated_data['current_password']):
+            return Response(
+                {'current_password': 'Incorrect password.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(serializer.validated_data['new_password'])
+        user.save(update_fields=['password'])
+        return Response({'message': 'Password updated successfully.'})
 
 
 class PendingUsersView(APIView):
