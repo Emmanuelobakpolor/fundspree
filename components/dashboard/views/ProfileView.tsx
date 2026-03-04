@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserCircle, Camera, CheckCircle2, Trash2, AlertTriangle,
@@ -91,9 +91,13 @@ export default function ProfileView() {
   // ── Avatar ────────────────────────────────────────────────────────────────
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    user?.avatarUrl ? `${API_BASE}${user.avatarUrl}` : null
+    user?.avatarUrl ?? null
   );
   const [avatarUploading, setAvatarUploading] = useState(false);
+
+  useEffect(() => {
+    setAvatarPreview(user?.avatarUrl ?? null);
+  }, [user?.avatarUrl]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -109,7 +113,7 @@ export default function ProfileView() {
       if (res.ok) {
         const data = await res.json();
         updateUser(data);
-        if (data.avatarUrl) setAvatarPreview(`${API_BASE}${data.avatarUrl}`);
+        if (data.avatarUrl) setAvatarPreview(data.avatarUrl);
       }
     } catch {
       // Keep local preview on error
