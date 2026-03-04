@@ -166,8 +166,17 @@ SIMPLE_JWT = {
 
 # CORS
 
+# CORS
+
 CORS_ALLOWED_ORIGINS = os.environ.get(
-    'CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://fundsphere17.vercel.app'
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,https://fundsphere17.vercel.app'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://fundsphere17.vercel.app",
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
