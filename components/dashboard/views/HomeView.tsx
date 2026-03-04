@@ -9,7 +9,6 @@ import {
   ArrowUpRight,
   CreditCard,
   TrendingUp,
-  ArrowDownRight,
   ChevronRight,
   ShieldCheck,
   Clock,
@@ -18,10 +17,6 @@ import { useAuth } from '../../AuthContext';
 import { authFetch } from '../../../lib/api';
 import WithdrawModal from './WithdrawModal';
 
-const recentTransactions = [
-  { id: 1, type: 'credit', label: 'Referral Bonus', amount: '+$0.00', date: 'Today', icon: TrendingUp, color: 'text-emerald-500' },
-  { id: 2, type: 'debit', label: 'Card Deposit', amount: '-$0.00', date: 'Today', icon: ArrowDownRight, color: 'text-red-400' },
-];
 
 export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { onNavigateToCards?: () => void; onNavigateToProfile?: () => void }) {
   const { user } = useAuth();
@@ -275,24 +270,24 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
           <button className="text-xs text-gold font-medium hover:underline">View all</button>
         </div>
         <div className="space-y-3">
-          {recentTransactions.map((tx) => {
-            const Icon = tx.icon;
-            return (
-              <div key={tx.id} className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <Icon size={15} className={tx.color} />
+          {(user?.referralCount ?? 0) > 0 ? (
+            Array.from({ length: user!.referralCount }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp size={15} className="text-emerald-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-black dark:text-white truncate">{tx.label}</p>
-                  <p className="text-xs text-gray-400">{tx.date}</p>
+                  <p className="text-sm font-medium text-black dark:text-white truncate">Referral Bonus</p>
+                  <p className="text-xs text-gray-400">Referral #{i + 1}</p>
                 </div>
-                <p className={`text-sm font-semibold ${tx.color}`}>{tx.amount}</p>
+                <p className="text-sm font-semibold text-emerald-500">+$50.00</p>
               </div>
-            );
-          })}
-          <div className="pt-2 text-center">
-            <p className="text-xs text-gray-400">No transactions yet. Start by funding your wallet.</p>
-          </div>
+            ))
+          ) : (
+            <div className="pt-2 text-center">
+              <p className="text-xs text-gray-400">No transactions yet. Start by funding your wallet.</p>
+            </div>
+          )}
         </div>
       </motion.div>
 

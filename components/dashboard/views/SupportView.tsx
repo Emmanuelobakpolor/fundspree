@@ -100,79 +100,7 @@ export default function SupportView() {
         </motion.div>
       )}
 
-      {/* Submit ticket form */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-5 space-y-4"
-      >
-        <p className="font-semibold text-black dark:text-white">Submit a Ticket</p>
 
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Subject</label>
-          <input
-            type="text"
-            value={form.subject}
-            onChange={(e) => setForm({ ...form, subject: e.target.value })}
-            placeholder="Brief description of your issue"
-            className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black px-4 py-3 text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gold/50 transition"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Category</label>
-          <div className="relative">
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full appearance-none rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black px-4 py-3 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-gold/50 transition"
-            >
-              <option value="">Select a category</option>
-              <option value="account">Account Issues</option>
-              <option value="kyc">KYC Verification</option>
-              <option value="payments">Payments & Withdrawals</option>
-              <option value="cards">Wallet Cards</option>
-              <option value="loans">Loans</option>
-              <option value="other">Other</option>
-            </select>
-            <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Message</label>
-          <textarea
-            rows={4}
-            value={form.message}
-            onChange={(e) => setForm({ ...form, message: e.target.value })}
-            placeholder="Describe your issue in detail..."
-            className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black px-4 py-3 text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none transition"
-          />
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          disabled={!form.subject || !form.message}
-          className="w-full py-3 rounded-xl bg-gold-gradient text-black font-semibold text-sm gold-glow hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Submit Ticket
-        </button>
-      </motion.div>
-
-      {/* Open tickets */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-5"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <Clock size={15} className="text-gold" />
-          <p className="font-semibold text-black dark:text-white text-sm">Open Tickets</p>
-        </div>
-        <p className="text-sm text-gray-400 text-center py-4">No open tickets. You're all good!</p>
-      </motion.div>
 
       {/* FAQ */}
       <motion.div
