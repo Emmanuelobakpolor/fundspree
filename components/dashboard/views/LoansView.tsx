@@ -7,19 +7,19 @@ import {
   ChevronDown, TrendingUp, Shield, Star, Zap, Building2,
 } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
+import { authFetch } from '../../../lib/api';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type CardTier = 'gold' | 'platinum' | 'business';
 
 interface LoanApplication {
-  id: string;
-  userId: string;
+  id: number;
   amount: number;
   purpose: string;
   tier: CardTier;
   status: 'pending' | 'approved' | 'rejected';
-  appliedAt: string;
+  applied_at: string;
 }
 
 // ─── Config ─────────────────────────────────────────────────────────────────────
@@ -112,35 +112,7 @@ const CARD_TIER_INFO = [
   },
 ];
 
-// ─── localStorage helpers ───────────────────────────────────────────────────────
-
-function getUserHighestCardTier(userId: string): CardTier | null {
-  try {
-    const orders = JSON.parse(localStorage.getItem('fundspree_card_orders') || '[]');
-    const confirmed = orders.filter(
-      (o: { userId: string; status: string }) => o.userId === userId && o.status === 'confirmed'
-    );
-    if (confirmed.length === 0) return null;
-    for (const tier of ['business', 'platinum', 'gold'] as CardTier[]) {
-      if (confirmed.some((o: { tier: string }) => o.tier === tier)) return tier;
-    }
-    return 'gold';
-  } catch {
-    return null;
-  }
-}
-
-function loadLoanApplications(): LoanApplication[] {
-  try {
-    return JSON.parse(localStorage.getItem('fundspree_loan_applications') || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function saveLoanApplications(apps: LoanApplication[]): void {
-  localStorage.setItem('fundspree_loan_applications', JSON.stringify(apps));
-}
+const TIER_PRIORITY: CardTier[] = ['business', 'platinum', 'gold'];
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
@@ -148,25 +120,51 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
   const { user } = useAuth();
 
   const [cardTier, setCardTier] = useState<CardTier | null>(null);
+  const [tierLoading, setTierLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [purpose, setPurpose] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [successId, setSuccessId] = useState<string | null>(null);
+  const [successId, setSuccessId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [myLoans, setMyLoans] = useState<LoanApplication[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    setCardTier(getUserHighestCardTier(user.id));
-    const all = loadLoanApplications();
-    setMyLoans(all.filter(l => l.userId === user.id));
+
+    const fetchData = async () => {
+      setTierLoading(true);
+      try {
+        const [cardsRes, loansRes] = await Promise.all([
+          authFetch('/api/cards/cards/'),
+          authFetch('/api/loans/'),
+        ]);
+
+        if (cardsRes.ok) {
+          const confirmedCards: { tier: string }[] = await cardsRes.json();
+          for (const t of TIER_PRIORITY) {
+            if (confirmedCards.some(c => c.tier === t)) {
+              setCardTier(t);
+              break;
+            }
+          }
+        }
+
+        if (loansRes.ok) {
+          const loans: LoanApplication[] = await loansRes.json();
+          setMyLoans(loans);
+        }
+      } finally {
+        setTierLoading(false);
+      }
+    };
+
+    fetchData();
   }, [user]);
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!user) return;
     setError(null);
 
-    // ── Card / tier checks ──
     if (!cardTier) {
       return setError('You need an active FundSphere card to apply for a loan. Purchase a Platinum or Business card from Wallet Cards.');
     }
@@ -186,30 +184,36 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
       );
     }
 
+    // Check if user already has a pending application
+    if (myLoans.some(loan => loan.status === 'pending')) {
+      return setError('Loan application is currently under review. Check back later');
+    }
+
     setSubmitting(true);
-    setTimeout(() => {
-      const newApp: LoanApplication = {
-        id: `loan_${Date.now()}`,
-        userId: user.id,
-        amount: plan.amount,
-        purpose,
-        tier: cardTier as CardTier,
-        status: 'pending',
-        appliedAt: new Date().toISOString(),
-      };
-      const all = loadLoanApplications();
-      all.push(newApp);
-      saveLoanApplications(all);
-      setMyLoans(prev => [...prev, newApp]);
+    try {
+      const res = await authFetch('/api/loans/', {
+        method: 'POST',
+        body: JSON.stringify({ amount: plan.amount, purpose, tier: cardTier }),
+      });
+
+      if (res.ok) {
+        const newLoan: LoanApplication = await res.json();
+        setMyLoans(prev => [newLoan, ...prev]);
+        setSuccessId(newLoan.id);
+        setSelectedPlan(null);
+        setPurpose('');
+        setTimeout(() => setSuccessId(null), 4000);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to submit application. Please try again.');
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
       setSubmitting(false);
-      setSuccessId(newApp.id);
-      setSelectedPlan(null);
-      setPurpose('');
-      setTimeout(() => setSuccessId(null), 4000);
-    }, 1400);
+    }
   };
 
-  // Tier label for the info badge
   const tierLabel =
     cardTier === 'business' ? 'Business' :
     cardTier === 'platinum' ? 'Platinum' :
@@ -241,7 +245,7 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
         </motion.div>
 
         {/* Tier info badge — only when eligible */}
-        {tierLabel && tierLimit && (
+        {!tierLoading && tierLabel && tierLimit && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -304,7 +308,6 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
           <div className="grid grid-cols-2 gap-3">
             {LOAN_PLANS.map((plan, i) => {
               const isSelected = selectedPlan === i;
-              // Dim plans the user's tier can't access
               const outOfRange =
                 (cardTier === 'platinum' && plan.amount > TIER_LOAN_LIMITS.platinum) ||
                 (!cardTier || cardTier === 'gold');
@@ -363,7 +366,7 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
 
           <motion.button
             onClick={handleApply}
-            disabled={submitting}
+            disabled={submitting || tierLoading || myLoans.some(loan => loan.status === 'pending')}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_6px_28px_-6px_rgba(212,175,55,0.5)] hover:shadow-[0_8px_36px_-6px_rgba(212,175,55,0.7)] transition-all duration-300"
             whileHover={!submitting ? { scale: 1.01 } : {}}
             whileTap={!submitting ? { scale: 0.98 } : {}}
@@ -376,7 +379,7 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
           </motion.button>
         </motion.div>
 
-        {/* Card Tiers */}
+        {/* Card Tiers - Swipeable */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -386,39 +389,47 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
             <TrendingUp size={15} className="text-[#D4AF37]" />
             <p className="text-gray-500 dark:text-white/60 text-xs font-semibold uppercase tracking-widest">Card Tiers &amp; Loan Access</p>
           </div>
-          <div className="space-y-3">
-            {CARD_TIER_INFO.map(tier => (
-              <div
-                key={tier.id}
-                className={`rounded-2xl border p-4 ${tier.bg} ${tier.border}`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${tier.iconBg}`}>
-                      <tier.Icon size={15} className={tier.iconColor} />
+          <div className="relative">
+            <div className="flex overflow-x-auto scrollbar-hide gap-3 pb-2 snap-x">
+              {CARD_TIER_INFO.map((tier, index) => (
+                <motion.div
+                  key={tier.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.22 + index * 0.05 }}
+                  className={`min-w-[280px] rounded-2xl border p-5 shadow-sm hover:shadow-md transition-shadow duration-300 ${tier.bg} ${tier.border} snap-start`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tier.iconBg}`}>
+                        <tier.Icon size={18} className={tier.iconColor} />
+                      </div>
+                      <div>
+                        <p className={`text-base font-bold ${tier.nameColor}`}>{tier.name}</p>
+                        <p className="text-gray-400 dark:text-white/30 text-xs">{tier.tagline}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className={`text-sm font-bold ${tier.nameColor}`}>{tier.name}</p>
-                      <p className="text-gray-400 dark:text-white/30 text-[11px]">{tier.tagline}</p>
+                    <div className="text-right">
+                      <p className={`text-lg font-black ${tier.nameColor}`}>{tier.price}</p>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${tier.badgeBg}`}>
+                        {tier.badge}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-black ${tier.nameColor}`}>{tier.price}</p>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tier.badgeBg}`}>
-                      {tier.badge}
-                    </span>
+                  <div className="space-y-2 pt-4 border-t border-black/5 dark:border-white/8">
+                    {tier.features.map(f => (
+                      <div key={f} className="flex items-start gap-2">
+                        <span className={`mt-0.5 text-xs font-bold ${tier.checkColor}`}>✓</span>
+                        <p className="text-gray-500 dark:text-white/40 text-sm">{f}</p>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <div className="space-y-1.5 pt-3 border-t border-black/5 dark:border-white/8">
-                  {tier.features.map(f => (
-                    <div key={f} className="flex items-start gap-2">
-                      <span className={`mt-0.5 text-[10px] font-bold ${tier.checkColor}`}>✓</span>
-                      <p className="text-gray-500 dark:text-white/40 text-xs">{f}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
+            {/* Gradient overlays for scroll indicator */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-black to-transparent pointer-events-none z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-black to-transparent pointer-events-none z-10" />
           </div>
         </motion.div>
 
@@ -437,7 +448,7 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
               </span>
             </div>
             <AnimatePresence>
-              {myLoans.slice().reverse().map(loan => (
+              {myLoans.map(loan => (
                 <motion.div
                   key={loan.id}
                   className="flex items-center gap-3 p-4 rounded-2xl border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/[0.02]"
@@ -463,7 +474,7 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
                       {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
                     </span>
                     <p className="text-gray-400 dark:text-white/25 text-[10px] mt-1">
-                      {new Date(loan.appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(loan.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 </motion.div>

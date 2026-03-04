@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Link2, AlertCircle, User, Mail, Hash,
-  CheckCircle2, Clock, Trash2, ChevronDown, Search, Wallet,
+  CheckCircle2, Trash2, ChevronDown, Search, Wallet,
   CreditCard, Lock,
 } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
+import { authFetch } from '../../../lib/api';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,17 +67,6 @@ function saveLinkedWallets(wallets: LinkedWallet[]): void {
   localStorage.setItem('fundspree_linked_wallets', JSON.stringify(wallets));
 }
 
-function hasActiveCard(userId: string): boolean {
-  try {
-    const orders = JSON.parse(localStorage.getItem('fundspree_card_orders') || '[]');
-    return orders.some(
-      (o: { userId: string; status: string }) =>
-        o.userId === userId && o.status === 'confirmed'
-    );
-  } catch {
-    return false;
-  }
-}
 
 // ─── Custom Wallet Dropdown ────────────────────────────────────────────────────
 
@@ -328,6 +318,7 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
   const [submitting, setSubmitting] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasActiveCard, setHasActiveCard] = useState(true); // optimistic default
 
   useEffect(() => {
     if (!user) return;
@@ -335,13 +326,17 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
     setLinkedWallets(all.filter(w => w.userId === user.id));
     setFullName(user.name || '');
     setEmail(user.email || '');
+    // Check for active cards from the backend
+    authFetch('/api/cards/cards/').then(res => {
+      if (res.ok) res.json().then((data: unknown[]) => setHasActiveCard(data.length > 0));
+    }).catch(() => {});
   }, [user]);
 
   const handleLink = () => {
     if (!user) return;
     setError(null);
 
-    if (!hasActiveCard(user.id)) return setError('You need an active FundSphere card to link an external wallet. Please activate a card first.');
+    if (!hasActiveCard) return setError('You need an active FundSphere card to link an external wallet. Please activate a card first.');
     if (!selectedWallet) return setError('Please select a wallet to link.');
     if (!fullName.trim()) return setError('Full name is required.');
     if (!email.trim() || !email.includes('@')) return setError('A valid email address is required.');
@@ -388,8 +383,104 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
     setLinkedWallets(prev => prev.filter(w => w.id !== id));
   };
 
+  // Wallet currently being linked (for the preloader label)
+  const linkingWalletName = selectedWallet
+    ? EXTERNAL_WALLETS.find(w => w.id === selectedWallet)?.name ?? 'wallet'
+    : 'wallet';
+
   return (
     <div className="min-h-screen bg-black px-4 pt-6 pb-24">
+
+      {/* ── Fullscreen Connecting Overlay ───────────────────────────────── */}
+      <AnimatePresence>
+        {submitting && (
+          <motion.div
+            key="connecting"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(16px)' }}
+          >
+            {/* Pulsing glow ring */}
+            <motion.div
+              animate={{ scale: [1, 1.18, 1], opacity: [0.35, 0.6, 0.35] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute w-48 h-48 rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.25) 0%, transparent 70%)' }}
+            />
+            {/* Wallet icon */}
+            <motion.div
+              animate={{ scale: [1, 1.06, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center shadow-[0_0_48px_-8px_rgba(212,175,55,0.7)] mb-8"
+            >
+              <Wallet size={36} className="text-black" />
+            </motion.div>
+            <p className="text-white text-xl font-bold tracking-tight mb-2">Connecting to wallet</p>
+            <div className="flex items-center gap-1 mb-3">
+              {[0, 0.2, 0.4].map((d, i) => (
+                <motion.span
+                  key={i}
+                  animate={{ opacity: [0.2, 1, 0.2] }}
+                  transition={{ duration: 1.2, repeat: Infinity, delay: d }}
+                  className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]"
+                />
+              ))}
+            </div>
+            <p className="text-white/40 text-sm">{linkingWalletName}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Fullscreen Success Overlay ───────────────────────────────────── */}
+      <AnimatePresence>
+        {successId && (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(16px)' }}
+          >
+            {/* Soft green glow */}
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+              className="absolute w-56 h-56 rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.2) 0%, transparent 70%)' }}
+            />
+            {/* Check circle */}
+            <motion.div
+              initial={{ scale: 0, rotate: -30 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 240, damping: 20, delay: 0.05 }}
+              className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-400/50 flex items-center justify-center mb-7"
+            >
+              <CheckCircle2 size={44} className="text-emerald-400" />
+            </motion.div>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-white text-2xl font-bold mb-2"
+            >
+              Wallet Linked!
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-white/50 text-sm"
+            >
+              {linkedWallets[linkedWallets.length - 1]?.walletName ?? 'External wallet'} connected successfully
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-lg mx-auto space-y-6">
 
         {/* Page Header */}
@@ -408,23 +499,6 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
             </div>
           </div>
         </motion.div>
-
-        {/* Success / Error Banners */}
-        <AnimatePresence>
-          {successId && (
-            <motion.div
-              className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-            >
-              <CheckCircle2 size={20} className="text-emerald-400 flex-shrink-0" />
-              <p className="text-emerald-300 text-sm font-medium">
-                Wallet linked successfully!
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {error && (
@@ -574,17 +648,10 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
             whileHover={!submitting ? { scale: 1.01 } : {}}
             whileTap={!submitting ? { scale: 0.98 } : {}}
           >
-            {submitting ? (
-              <>
-                <Clock size={16} className="animate-spin" />
-                Linking Wallet…
-              </>
-            ) : (
-              <>
-                <Link2 size={16} />
-                Link Wallet
-              </>
-            )}
+            <>
+              <Link2 size={16} />
+              Link Wallet
+            </>
           </motion.button>
         </motion.div>
 

@@ -73,12 +73,11 @@ export default function LoadingScreen() {
             transition={{ delay: 0.3, duration: 0.55 }}
             className="text-center"
           >
-            <p className="text-white text-[1.6rem] font-bold tracking-tight leading-none">
-              Fund<span className="text-gold">Sphere</span>
-            </p>
-            <p className="text-gray-500 text-[10px] uppercase tracking-[0.28em] mt-2 font-medium">
-              Premium Digital Finance
-            </p>
+            <img
+              src="/assets/Screenshot_2026-03-01_104801-removebg-preview.png"
+              alt="FundSphere"
+              className="h-16 w-auto object-contain brightness-0 invert mx-auto"
+            />
           </motion.div>
 
           {/* Progress bar */}

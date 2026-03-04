@@ -48,7 +48,7 @@ export default function VerificationStatus({ onBack }: VerificationStatusProps) 
             {/* Message box */}
             <div className="rounded-2xl p-5 mb-2 border bg-gold/5 border-gold/30">
               <p className="text-gray-700 dark:text-gray-300 text-sm text-center leading-relaxed">
-                To activate your account, you must contact admin.
+                 Contact admin for account activation.
               </p>
             </div>
 

@@ -1,21 +1,36 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { API_BASE } from '../lib/api';
 
 interface User {
   id: string;
   email: string;
   name: string;
+  phone: string;
+  country: string;
+  dateOfBirth: string | null;
   welcomeBonus: number;
+  balance: number;
+  referralBonus: number;
+  withdrawalThisMonth: number;
+  withdrawalAllTime: number;
+  referralCode: string;
+  referralCount: number;
+  kycStatus: 'none' | 'pending' | 'approved' | 'rejected';
+  avatarUrl: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isPendingApproval: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, referralCode?: string) => Promise<string | null>;
   logout: () => void;
+  updateUser: (data: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
   isVerificationScreenSeen: boolean;
   markVerificationScreenSeen: () => void;
 }
@@ -26,21 +41,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isVerificationScreenSeen, setIsVerificationScreenSeen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPendingApproval, setIsPendingApproval] = useState(false);
 
+  // Attempt to restore session from stored access token
   useEffect(() => {
-    const storedUser = localStorage.getItem('fundspree_user');
-    const storedVerificationSeen = localStorage.getItem('fundspree_verification_seen');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setIsVerificationScreenSeen(storedVerificationSeen === 'true');
-      } catch (error) {
-        console.error('Failed to parse user data:', error);
-        localStorage.removeItem('fundspree_user');
-        localStorage.removeItem('fundspree_verification_seen');
+    const restoreSession = async () => {
+      const accessToken = localStorage.getItem('fundspree_access_token');
+      if (!accessToken) {
+        setIsLoading(false);
+        return;
       }
-    }
-    setIsLoading(false);
+
+      try {
+        let res = await fetch(`${API_BASE}/api/auth/me/`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        // If token expired, try to refresh once
+        if (res.status === 401) {
+          const refreshToken = localStorage.getItem('fundspree_refresh_token');
+          if (refreshToken) {
+            const refreshRes = await fetch(`${API_BASE}/api/auth/token/refresh/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh: refreshToken }),
+            });
+
+            if (refreshRes.ok) {
+              const refreshData = await refreshRes.json();
+              localStorage.setItem('fundspree_access_token', refreshData.access);
+              if (refreshData.refresh) {
+                localStorage.setItem('fundspree_refresh_token', refreshData.refresh);
+              }
+              res = await fetch(`${API_BASE}/api/auth/me/`, {
+                headers: { Authorization: `Bearer ${refreshData.access}` },
+              });
+            } else {
+              localStorage.removeItem('fundspree_access_token');
+              localStorage.removeItem('fundspree_refresh_token');
+              localStorage.removeItem('fundspree_verification_seen');
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+
+        if (res.ok) {
+          const userData: User = await res.json();
+          setUser(userData);
+          const seen = localStorage.getItem('fundspree_verification_seen');
+          setIsVerificationScreenSeen(seen === 'true');
+        }
+      } catch {
+        // Network error — stay logged out
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    restoreSession();
   }, []);
 
   const markVerificationScreenSeen = () => {
@@ -48,69 +107,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('fundspree_verification_seen', 'true');
   };
 
+  const updateUser = (data: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...data } : prev);
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const storedUsers = JSON.parse(localStorage.getItem('fundspree_users') || '[]');
-      const existingUser = storedUsers.find((u: any) => u.email === email && u.password === password);
-      
-      if (existingUser) {
-        const userData = {
-          id: existingUser.id,
-          email: existingUser.email,
-          name: existingUser.name,
-          welcomeBonus: existingUser.welcomeBonus ?? 10,
-        };
-        setUser(userData);
-        localStorage.setItem('fundspree_user', JSON.stringify(userData));
+      const res = await fetch(`${API_BASE}/api/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('fundspree_access_token', data.access);
+        localStorage.setItem('fundspree_refresh_token', data.refresh);
+        setUser(data.user);
+        setIsPendingApproval(false);
         return true;
       }
+
+      if (res.status === 403 && data.error === 'pending_approval') {
+        setIsPendingApproval(true);
+        return false;
+      }
+
       return false;
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       return false;
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, referralCode?: string): Promise<string | null> => {
     try {
-      const storedUsers = JSON.parse(localStorage.getItem('fundspree_users') || '[]');
-      
-      const userExists = storedUsers.some((u: any) => u.email === email);
-      if (userExists) {
-        return false;
+      const res = await fetch(`${API_BASE}/api/auth/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, ...(referralCode ? { referral_code: referralCode } : {}) }),
+      });
+
+      if (res.status === 201) return null;
+
+      const data = await res.json();
+      const firstField = Object.values(data)[0];
+      if (Array.isArray(firstField) && firstField.length > 0) {
+        return firstField[0] as string;
       }
+      return 'Registration failed. Please try again.';
+    } catch {
+      return 'Network error. Is the server running?';
+    }
+  };
 
-      const newUser = {
-        id: Date.now().toString(),
-        name,
-        email,
-        password,
-        welcomeBonus: 10,
-        createdAt: new Date().toISOString(),
-      };
-
-      storedUsers.push(newUser);
-      localStorage.setItem('fundspree_users', JSON.stringify(storedUsers));
-
-      const userData = {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        welcomeBonus: newUser.welcomeBonus,
-      };
-      setUser(userData);
-      localStorage.setItem('fundspree_user', JSON.stringify(userData));
-      
-      return true;
-    } catch (error) {
-      console.error('Registration error:', error);
-      return false;
+  const refreshUser = async () => {
+    const accessToken = localStorage.getItem('fundspree_access_token');
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const userData: User = await res.json();
+        setUser(userData);
+      }
+    } catch {
+      // Silently ignore
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('fundspree_user');
+    setIsPendingApproval(false);
+    setIsVerificationScreenSeen(false);
+    localStorage.removeItem('fundspree_access_token');
+    localStorage.removeItem('fundspree_refresh_token');
+    localStorage.removeItem('fundspree_verification_seen');
   };
 
   return (
@@ -119,9 +192,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
+        isPendingApproval,
         login,
         register,
         logout,
+        updateUser,
+        refreshUser,
         isVerificationScreenSeen,
         markVerificationScreenSeen,
       }}

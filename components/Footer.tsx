@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail, MapPin, Phone } from 'lucide-react';
 import Link from 'next/link';
-import { FundSphereLogo, XIcon, LinkedInIcon, GitHubIcon, TelegramIcon } from './icons/CryptoIcons';
+import { XIcon, LinkedInIcon, GitHubIcon, TelegramIcon } from './icons/CryptoIcons';
 
 export function CallToAction() {
   return (
@@ -50,12 +50,13 @@ export function Footer() {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
           <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center space-x-2 mb-8">
-              <FundSphereLogo size={36} />
-              <span className="text-2xl font-bold tracking-tight text-black dark:text-white">
-                Fund<span className="text-gold">Sphere</span>
-              </span>
-            </Link>
+            <Link href="/" className="flex items-center group">
+  <img
+    src="/assets/Screenshot_2026-03-01_104801-removebg-preview.png"
+    alt="FundSphere"
+    className="h-20 md:h-18 w-auto object-contain transition-all duration-300 group-hover:scale-110 drop-shadow-md"
+  />
+</Link>
             <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm">
               The premium choice for digital asset management. Secure, elegant, and built for the future.
             </p>
@@ -88,18 +89,8 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-bold text-lg mb-8 dark:text-white">Support</h4>
-            <ul className="space-y-4">
-              {['Help Center', 'API Documentation', 'System Status', 'Privacy Policy', 'Terms of Service'].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="text-gray-500 dark:text-gray-400 hover:text-gold transition-colors">
-                    {item}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          
+          
 
           <div>
             <h4 className="font-bold text-lg mb-8 dark:text-white">Contact Us</h4>

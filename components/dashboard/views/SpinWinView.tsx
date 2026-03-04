@@ -1,125 +1,99 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import { Gift, Trophy, Clock, Star, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
-
-// ─── Types ─────────────────────────────────────────────────────────────────────
-
-type CardTier = 'gold' | 'platinum' | 'business';
+import { authFetch } from '../../../lib/api';
 
 // ─── Config ─────────────────────────────────────────────────────────────────────
 
-const TIER_SPIN_LIMITS: Record<Exclude<CardTier, 'gold'>, number> = {
-  platinum: 2,
-  business: 5,
-};
-
 const prizes = [
-  { label: '$0', color: '#1a1a1a' },
-  { label: '$5', color: '#D4AF37' },
-  { label: '$0', color: '#1a1a1a' },
-  { label: '$10', color: '#B8860B' },
-  { label: '$0', color: '#1a1a1a' },
-  { label: '$2', color: '#D4AF37' },
-  { label: '$0', color: '#1a1a1a' },
+  { label: '$0',        color: '#1a1a1a' },
+  { label: '$5',        color: '#D4AF37' },
+  { label: '$0',        color: '#1a1a1a' },
+  { label: '$10',       color: '#B8860B' },
+  { label: '$0',        color: '#1a1a1a' },
+  { label: '$2',        color: '#D4AF37' },
+  { label: '$0',        color: '#1a1a1a' },
   { label: 'Try Again', color: '#333333' },
 ];
 
-const leaderboard = [
-  { rank: 1, name: 'User****', prize: '$50', date: 'Today' },
-  { rank: 2, name: 'Alex****', prize: '$10', date: 'Yesterday' },
-  { rank: 3, name: 'John****', prize: '$5', date: '2 days ago' },
-];
+// ─── Countdown helper ───────────────────────────────────────────────────────────
 
-// ─── localStorage helpers ───────────────────────────────────────────────────────
-
-function getUserHighestCardTier(userId: string): CardTier | null {
-  try {
-    const orders = JSON.parse(localStorage.getItem('fundspree_card_orders') || '[]');
-    const confirmed = orders.filter(
-      (o: { userId: string; status: string }) => o.userId === userId && o.status === 'confirmed'
-    );
-    if (confirmed.length === 0) return null;
-    for (const tier of ['business', 'platinum', 'gold'] as CardTier[]) {
-      if (confirmed.some((o: { tier: string }) => o.tier === tier)) return tier;
-    }
-    return 'gold';
-  } catch {
-    return null;
-  }
-}
-
-function getTodayString() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getSpinsUsedToday(userId: string): number {
-  try {
-    const data = JSON.parse(localStorage.getItem(`fundspree_spins_${userId}`) || '{}');
-    return data.date === getTodayString() ? (data.used ?? 0) : 0;
-  } catch {
-    return 0;
-  }
-}
-
-function setSpinsUsedToday(userId: string, used: number) {
-  localStorage.setItem(
-    `fundspree_spins_${userId}`,
-    JSON.stringify({ date: getTodayString(), used })
-  );
+function getTimeUntilMidnight(): string {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const diff = midnight.getTime() - now.getTime();
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return `${h}h ${m}m`;
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
 export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: { onNavigateToCards?: () => void }) {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
-  const [cardTier, setCardTier] = useState<CardTier | null>(null);
+  const [eligibleTier, setEligibleTier] = useState<string | null>(null);
   const [spinsLeft, setSpinsLeft] = useState(0);
   const [maxSpins, setMaxSpins] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(null);
-  const [totalWon, setTotalWon] = useState(0);
+  const [totalWon, setTotalWon] = useState('0.00');
   const [error, setError] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [countdown, setCountdown] = useState(getTimeUntilMidnight());
+  const [leaderboard, setLeaderboard] = useState<{ rank: number; name: string; prize: string; date: string }[]>([]);
   const controls = useAnimation();
+
+  const fetchStatus = useCallback(async () => {
+    const res = await authFetch('/api/spinwin/status/');
+    if (res.ok) {
+      const data = await res.json();
+      setEligibleTier(data.eligible_tier);
+      setMaxSpins(data.max_spins);
+      setSpinsLeft(data.spins_left);
+      setTotalWon(parseFloat(data.total_won).toFixed(2));
+    }
+    setStatusLoading(false);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
-    const tier = getUserHighestCardTier(user.id);
-    setCardTier(tier);
-    if (tier && tier !== 'gold') {
-      const max = TIER_SPIN_LIMITS[tier as 'platinum' | 'business'];
-      const used = getSpinsUsedToday(user.id);
-      setMaxSpins(max);
-      setSpinsLeft(Math.max(0, max - used));
-    }
-  }, [user]);
+    fetchStatus();
+
+    authFetch('/api/spinwin/leaderboard/').then(res => {
+      if (res.ok) res.json().then(setLeaderboard);
+    });
+
+    const timer = setInterval(() => setCountdown(getTimeUntilMidnight()), 60000);
+    return () => clearInterval(timer);
+  }, [user, fetchStatus]);
 
   const spinWheel = async () => {
-    if (!user) return;
+    if (!user || spinning || spinsLeft <= 0) return;
     setError(null);
-
-    // ── Card / tier checks ──
-    if (!cardTier) {
-      return setError('You need an active FundSphere card to use Spin & Win. Purchase a Platinum or Business card from Wallet Cards.');
-    }
-    if (cardTier === 'gold') {
-      return setError('Your Gold card does not include Spin & Win access. Upgrade to a Platinum or Business card.');
-    }
-    if (spinning) return;
-    if (spinsLeft <= 0) return;
-
+    setResult(null);
     setSpinning(true);
-    const used = getSpinsUsedToday(user.id);
-    setSpinsUsedToday(user.id, used + 1);
-    setSpinsLeft(s => s - 1);
 
+    const res = await authFetch('/api/spinwin/spin/', { method: 'POST' });
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error || 'Failed to spin. Please try again.');
+      setSpinning(false);
+      return;
+    }
+
+    const data = await res.json();
+    const prizeIndex: number = data.prize_index;
+
+    // Animate wheel to the server-decided segment
     const extraSpins = 5 + Math.random() * 5;
     const sliceAngle = 360 / prizes.length;
-    const prizeIndex = Math.floor(Math.random() * prizes.length);
     const targetAngle = rotation + extraSpins * 360 + sliceAngle * prizeIndex;
 
     await controls.start({
@@ -128,20 +102,24 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
     });
 
     setRotation(targetAngle);
-    const prize = prizes[prizeIndex];
-    setResult(prize.label);
+    setResult(data.prize_label);
+    setSpinsLeft(data.spins_left);
+    setTotalWon(parseFloat(data.total_won).toFixed(2));
 
-    const value = parseFloat(prize.label.replace('$', ''));
-    if (!isNaN(value) && value > 0) setTotalWon(prev => prev + value);
+    // Sync winnings into the auth context so the dashboard balance updates immediately
+    if (parseFloat(data.prize_amount) > 0) {
+      updateUser({ balance: Number(user.balance) + parseFloat(data.prize_amount) });
+    }
+
+    // Refresh leaderboard
+    authFetch('/api/spinwin/leaderboard/').then(r => { if (r.ok) r.json().then(setLeaderboard); });
 
     setSpinning(false);
   };
 
   const RADIUS = 120;
   const CENTER = 130;
-
-  // Eligible = has platinum or business
-  const isEligible = cardTier === 'platinum' || cardTier === 'business';
+  const isEligible = !!eligibleTier;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-2xl mx-auto">
@@ -154,35 +132,36 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
         </div>
         <h2 className="text-2xl font-bold text-black dark:text-white">Spin &amp; Win</h2>
 
-        {isEligible ? (
-          <>
-            <p className="text-sm text-gray-500 mt-1">
-              You have{' '}
-              <span className="font-semibold text-gold">{spinsLeft}</span>
-              {' '}of{' '}
-              <span className="font-semibold text-gold">{maxSpins}</span>
-              {' '}spin{maxSpins !== 1 ? 's' : ''} remaining today
+        {!statusLoading && (
+          isEligible ? (
+            <>
+              <p className="text-sm text-gray-500 mt-1">
+                You have{' '}
+                <span className="font-semibold text-gold">{spinsLeft}</span>
+                {' '}of{' '}
+                <span className="font-semibold text-gold">{maxSpins}</span>
+                {' '}spin{maxSpins !== 1 ? 's' : ''} remaining today
+              </p>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                {Array.from({ length: maxSpins }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                      i < spinsLeft
+                        ? 'bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.6)]'
+                        : 'bg-gray-200 dark:bg-white/10'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 mt-1">
+              Platinum: <span className="text-gold font-semibold">2 spins/day</span>
+              {' · '}
+              Business: <span className="text-gold font-semibold">5 spins/day</span>
             </p>
-            {/* Spin dots */}
-            <div className="flex items-center justify-center gap-2 mt-2">
-              {Array.from({ length: maxSpins }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                    i < spinsLeft
-                      ? 'bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.6)]'
-                      : 'bg-gray-200 dark:bg-white/10'
-                  }`}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <p className="text-sm text-gray-400 mt-1">
-            Platinum: <span className="text-gold font-semibold">2 spins/day</span>
-            {' · '}
-            Business: <span className="text-gold font-semibold">5 spins/day</span>
-          </p>
+          )
         )}
       </div>
 
@@ -201,7 +180,7 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
         )}
       </AnimatePresence>
 
-      {/* Wheel — always visible */}
+      {/* Wheel */}
       <div className="flex flex-col items-center gap-6">
         <div
           className={`relative transition-opacity duration-300 ${!isEligible ? 'opacity-50' : ''}`}
@@ -269,10 +248,12 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
               className="text-center"
             >
               <p className="text-2xl font-bold text-black dark:text-white">
-                {result === 'Try Again' ? '😅 Try Again!' : `🎉 You won ${result}!`}
+                {result === 'Try Again' || result === '$0' ? '😅 Try Again!' : `🎉 You won ${result}!`}
               </p>
               <p className="text-sm text-gray-400 mt-1">
-                {result === 'Try Again' ? 'Better luck next time.' : 'Credited to your FundSphere wallet.'}
+                {result === 'Try Again' || result === '$0'
+                  ? 'Better luck next time.'
+                  : 'Credited to your FundSphere wallet.'}
               </p>
             </motion.div>
           )}
@@ -280,12 +261,14 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
 
         <button
           onClick={spinWheel}
-          disabled={spinning || (isEligible && spinsLeft <= 0)}
+          disabled={spinning || statusLoading || !isEligible || spinsLeft <= 0}
           className="px-10 py-3.5 rounded-2xl bg-gold-gradient text-black font-bold text-sm gold-glow hover:opacity-90 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {spinning
             ? 'Spinning...'
-            : isEligible && spinsLeft <= 0
+            : !isEligible
+            ? 'Platinum / Business Card Required'
+            : spinsLeft <= 0
             ? 'Come Back Tomorrow'
             : 'Spin Now'}
         </button>
@@ -296,12 +279,12 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-4 text-center">
           <Clock size={18} className="text-gold mx-auto mb-1" />
           <p className="text-xs text-gray-400">Resets in</p>
-          <p className="font-bold text-black dark:text-white text-sm mt-0.5">23h 59m</p>
+          <p className="font-bold text-black dark:text-white text-sm mt-0.5">{countdown}</p>
         </div>
         <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-4 text-center">
           <Star size={18} className="text-gold mx-auto mb-1" />
           <p className="text-xs text-gray-400">Total Won</p>
-          <p className="font-bold text-black dark:text-white text-sm mt-0.5">${totalWon.toFixed(2)}</p>
+          <p className="font-bold text-black dark:text-white text-sm mt-0.5">${totalWon}</p>
         </div>
       </div>
 
@@ -311,20 +294,24 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
           <Trophy size={16} className="text-gold" />
           <p className="font-semibold text-black dark:text-white">Today&apos;s Winners</p>
         </div>
-        <div className="space-y-3">
-          {leaderboard.map((entry) => (
-            <div key={entry.rank} className="flex items-center gap-3">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                entry.rank === 1 ? 'bg-gold text-black' : 'bg-gray-100 dark:bg-white/10 text-gray-500'
-              }`}>
-                {entry.rank}
-              </span>
-              <span className="flex-1 text-sm text-black dark:text-white font-medium">{entry.name}</span>
-              <span className="text-sm font-bold text-emerald-500">{entry.prize}</span>
-              <span className="text-xs text-gray-400">{entry.date}</span>
-            </div>
-          ))}
-        </div>
+        {leaderboard.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-2">No winners yet today. Be the first!</p>
+        ) : (
+          <div className="space-y-3">
+            {leaderboard.map((entry) => (
+              <div key={entry.rank} className="flex items-center gap-3">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  entry.rank === 1 ? 'bg-gold text-black' : 'bg-gray-100 dark:bg-white/10 text-gray-500'
+                }`}>
+                  {entry.rank}
+                </span>
+                <span className="flex-1 text-sm text-black dark:text-white font-medium">{entry.name}</span>
+                <span className="text-sm font-bold text-emerald-500">{entry.prize}</span>
+                <span className="text-xs text-gray-400">{entry.date}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

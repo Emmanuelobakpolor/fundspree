@@ -64,6 +64,20 @@ export function BNBIcon({ className }: { className?: string }) {
   );
 }
 
+export function USDCIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#2775CA" />
+      <path
+        fill="white"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 6C10.477 6 6 10.477 6 16s4.477 10 10 10 10-4.477 10-10S21.523 6 16 6zm1.2 15.94v1.26a.2.2 0 0 1-.2.2h-.8a.2.2 0 0 1-.2-.2V21.9a5.6 5.6 0 0 1-3.4-1.66.2.2 0 0 1 0-.28l.8-.8a.2.2 0 0 1 .28 0A4.2 4.2 0 0 0 16 20.2c1.66 0 2.8-.84 2.8-2.1 0-1.2-.76-1.82-2.62-2.34C13.8 15.1 12.4 14.06 12.4 12.3c0-1.6 1.2-2.84 2.8-3.16V7.8a.2.2 0 0 1 .2-.2h.8a.2.2 0 0 1 .2.2v1.36a5.4 5.4 0 0 1 2.88 1.4.2.2 0 0 1 .02.28l-.76.84a.2.2 0 0 1-.28.02A3.8 3.8 0 0 0 16 10.6c-1.54 0-2.6.8-2.6 2 0 1.14.78 1.78 2.72 2.32 2.4.66 3.68 1.72 3.68 3.48 0 1.64-1.18 2.9-2.6 3.5z"
+      />
+    </svg>
+  );
+}
+
 export function XRPIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} xmlns="http://www.w3.org/2000/svg" fill="none">
@@ -78,33 +92,13 @@ export function XRPIcon({ className }: { className?: string }) {
 
 export function FundSphereLogo({ size = 36 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" fill="none">
-      <defs>
-        <linearGradient id="fsGold" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#F5D87A" />
-          <stop offset="50%" stopColor="#D4AF37" />
-          <stop offset="100%" stopColor="#A8860C" />
-        </linearGradient>
-      </defs>
-      <rect width="36" height="36" rx="9" fill="url(#fsGold)" />
-      {/* Stylized sphere lines inside the box */}
-      <ellipse cx="18" cy="18" rx="9" ry="9" stroke="rgba(0,0,0,0.18)" strokeWidth="1.2" fill="none" />
-      <ellipse cx="18" cy="18" rx="9" ry="4" stroke="rgba(0,0,0,0.12)" strokeWidth="1" fill="none" />
-      <line x1="9" y1="18" x2="27" y2="18" stroke="rgba(0,0,0,0.12)" strokeWidth="1" />
-      {/* F letter */}
-      <text
-        x="18"
-        y="23"
-        textAnchor="middle"
-        fill="rgba(0,0,0,0.85)"
-        fontSize="15"
-        fontWeight="900"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        letterSpacing="-0.5"
-      >
-        F
-      </text>
-    </svg>
+    <img 
+      src="/assets/Screenshot_2026-03-01_104801-removebg-preview.png" 
+      alt="FundSphere Logo"
+      width={size}
+      height={size}
+      className="object-contain"
+    />
   );
 }
 

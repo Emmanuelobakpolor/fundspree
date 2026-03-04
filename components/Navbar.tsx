@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Sun, Moon, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
-import { FundSphereLogo } from './icons/CryptoIcons';
 import { useAuth } from './AuthContext';
 import AuthModal from './AuthModal';
 
@@ -12,7 +11,7 @@ const navLinks = [
   { name: 'Features', href: '#features' },
   { name: 'Security', href: '#security' },
   { name: 'Rewards', href: '#rewards' },
-  { name: 'Loans', href: '#loans' },
+  { name: 'Cards', href: '#cards' },
   { name: 'Contact', href: '#contact' },
 ];
 
@@ -21,7 +20,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, isAuthenticated, logout, isVerificationScreenSeen } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,14 +31,8 @@ export default function Navbar() {
       setDarkMode(true);
     }
     
-    // Redirect to verification page if authenticated and haven't seen the screen yet
-    // but don't redirect if already on dashboard
-    if (isAuthenticated && !isVerificationScreenSeen && window.location.pathname !== '/verification' && !window.location.pathname.startsWith('/dashboard')) {
-      window.location.href = '/verification';
-    }
-    
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isAuthenticated, isVerificationScreenSeen]);
+  }, []);
 
   const toggleDarkMode = () => {
     if (darkMode) {
@@ -72,14 +65,12 @@ export default function Navbar() {
           }`}
         >
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-2xl bg-black dark:bg-gold flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
-              <FundSphereLogo />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-black dark:text-white">
-              FundSphere
-            </span>
-          </Link>
+      <Link href="/" className="flex items-center group">
+  <img
+    src="/assets/Screenshot_2026-03-01_104801-removebg-preview.png"
+    alt="FundSphere"
+className="h-16 md:h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg"  />
+</Link>
 
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-full px-2 py-1.5">

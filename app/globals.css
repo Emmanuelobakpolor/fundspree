@@ -23,6 +23,16 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Hide scrollbar for a cleaner look */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 .dark body {
   background: #000000;
   color: #ffffff;

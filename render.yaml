@@ -1,0 +1,35 @@
+---
+services:
+  - type: web
+    name: fundspree-backend
+    runtime: python
+    version: 3.11
+    buildCommand: pip install -r backend/requirements.txt && python backend/manage.py collectstatic --noinput
+    startCommand: gunicorn --chdir backend config.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "http://localhost:3000,https://fundsphere17.vercel.app"
+      - key: DB_ENGINE
+        value: "django.db.backends.postgresql"
+      - key: DB_NAME
+        value: "fundspheredb"
+      - key: DB_USER
+        value: "fundspheredb_user"
+      - key: DB_PASSWORD
+        value: "JNM9vAwDufR81ZiJFzceNTLnbfpjOv80"
+      - key: DB_HOST
+        value: "dpg-d6jnjaa4d50c7392vv10-a.oregon-postgres.render.com"
+      - key: DB_PORT
+        value: "5432"
+      - key: CLOUDINARY_CLOUD_NAME
+        value: "dw8qc3q5d"
+      - key: CLOUDINARY_API_KEY
+        value: "995544599534576"
+      - key: CLOUDINARY_API_SECRET
+        value: "UcXkMCIJxDjLWRrWNG1x56ZGTok"

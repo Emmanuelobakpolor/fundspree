@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { ChipIcon } from '../../icons/CryptoIcons';
 import { useAuth } from '../../AuthContext';
+import { authFetch, authFetchMultipart } from '../../../lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,17 +18,15 @@ type PaymentMethod = 'btc' | 'usdt' | 'eth';
 type OrderStatus = 'pending' | 'confirmed' | 'rejected';
 
 interface CardOrder {
-  id: string;
-  userId: string;
+  id: number;
   tier: CardTier;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
-  proofImage: string;
+  proofImageUrl: string | null;
   submittedAt: string;
   cardNumber: string;
   cardExpiry: string;
   cardHolder: string;
-  cardCvv: string;
 }
 
 interface StoredCard {
@@ -129,7 +128,7 @@ const PAYMENT_WALLETS: Record<PaymentMethod, {
   btc: {
     label: 'Bitcoin',
     symbol: 'BTC',
-    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    address: 'bc1q55pmv8c2rpgtxnz5qx40kpe82dzp7ad42tq024',
     color: '#f7931a',
     network: 'Bitcoin Network',
     emoji: '₿',
@@ -137,7 +136,7 @@ const PAYMENT_WALLETS: Record<PaymentMethod, {
   usdt: {
     label: 'Tether USD',
     symbol: 'USDT',
-    address: 'TNPkFBPPVzQBKjHnFQK5TQMK9aqG4KXBS',
+    address: 'TQBZfMKBoLcAzTsaUE1x8F2EJWXF1U9j1w',
     color: '#26a17b',
     network: 'TRC20 (Tron Network)',
     emoji: '₮',
@@ -145,7 +144,7 @@ const PAYMENT_WALLETS: Record<PaymentMethod, {
   eth: {
     label: 'Ethereum',
     symbol: 'ETH',
-    address: '0x742d35Cc6634C0532925a3b8D4C9B1f5e3c7B8a2',
+    address: '0xCBDc0110eCbEb07a56a6BA9e74DF93D5Ad8C1D2F',
     color: '#627eea',
     network: 'Ethereum Mainnet',
     emoji: 'Ξ',
@@ -170,20 +169,21 @@ function generateCVV() {
   return Math.floor(100 + Math.random() * 900).toString();
 }
 
-function loadAllOrders(): CardOrder[] {
-  try { return JSON.parse(localStorage.getItem('fundspree_card_orders') || '[]'); }
-  catch { return []; }
-}
-
-function saveAllOrders(orders: CardOrder[]) {
-  localStorage.setItem('fundspree_card_orders', JSON.stringify(orders));
-}
 
 // ─── Card Face: Front ─────────────────────────────────────────────────────────
 
 function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
   tier: CardTierConfig; cardNumber: string; expiry: string; holder: string; locked?: boolean;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(cardNumber.replace(/\s/g, ''));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <motion.div 
       className={`
@@ -259,14 +259,28 @@ function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
 
         {/* Card number – animated reveal */}
         <div className="mt-8 relative">
-          <motion.p
-            className={`text-lg md:text-xl font-mono tracking-[0.2em] font-semibold opacity-95 break-all transition-all duration-300 ${locked ? 'blur-[5px] select-none' : ''}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 0.95, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            {cardNumber}
-          </motion.p>
+          <div className="flex items-center gap-2">
+            <motion.p
+              className={`text-lg md:text-xl font-mono tracking-[0.2em] font-semibold opacity-95 break-all transition-all duration-300 ${locked ? 'blur-[5px] select-none' : ''}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 0.95, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              {cardNumber}
+            </motion.p>
+            {!locked && (
+              <button
+                onClick={handleCopy}
+                className="flex-shrink-0 p-1.5 rounded-md bg-white/15 hover:bg-white/30 transition-colors"
+                title="Copy card number"
+              >
+                {copied
+                  ? <Check size={13} className="text-green-300" />
+                  : <Copy size={13} className="text-white/80" />
+                }
+              </button>
+            )}
+          </div>
           {locked && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <span className="flex items-center gap-1 bg-black/40 backdrop-blur-sm text-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider">
@@ -608,6 +622,7 @@ function CheckoutScreen({ tier, holder, onBack, onSubmitted }: {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('btc');
   const [copied, setCopied] = useState(false);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [hasProofFile, setHasProofFile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -629,6 +644,7 @@ function CheckoutScreen({ tier, holder, onBack, onSubmitted }: {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setProofFile(file);
     setHasProofFile(true);
     const reader = new FileReader();
     reader.onload = (ev) => setProofPreview(ev.target?.result as string);
@@ -636,24 +652,41 @@ function CheckoutScreen({ tier, holder, onBack, onSubmitted }: {
   };
 
   const handleSubmit = async () => {
-    if (!proofPreview) return;
+    if (!proofFile) return;
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1000));
-    const order: CardOrder = {
-      id: Date.now().toString(),
-      userId: '',
-      tier: tier.id,
-      status: 'pending',
-      paymentMethod,
-      proofImage: proofPreview,
-      submittedAt: new Date().toISOString(),
-      cardNumber,
-      cardExpiry: expiry,
-      cardCvv: cvv,
-      cardHolder: holder,
-    };
-    onSubmitted(order);
-    setSubmitting(false);
+    try {
+      const formData = new FormData();
+      formData.append('tier', tier.id);
+      formData.append('payment_method', paymentMethod);
+      formData.append('proof_image', proofFile);
+      formData.append('card_number', cardNumber);
+      formData.append('card_expiry', expiry);
+      formData.append('card_holder', holder);
+      formData.append('card_cvv', cvv);
+
+      const res = await authFetchMultipart('/api/cards/orders/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      const order: CardOrder = {
+        id: data.id,
+        tier: data.tier,
+        status: data.status,
+        paymentMethod: data.payment_method,
+        proofImageUrl: data.proof_image_url,
+        submittedAt: data.submitted_at,
+        cardNumber: data.card_number,
+        cardExpiry: data.card_expiry,
+        cardHolder: data.card_holder,
+      };
+      onSubmitted(order);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -868,7 +901,7 @@ function ConfirmationScreen({ order, tier, onDone }: {
         className="mt-6 w-full max-w-xs rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 text-left space-y-2.5"
       >
         {[
-          { label: 'Order ID', value: `#${order.id.slice(-8)}`, mono: true },
+          { label: 'Order ID', value: `#${order.id}`, mono: true },
           { label: 'Card Tier', value: tier.name, mono: false },
           { label: 'Payment', value: `${order.paymentMethod.toUpperCase()} · ${tier.price}`, mono: false },
           { label: 'Status', value: 'Pending Verification', amber: true },
@@ -994,25 +1027,43 @@ export default function WalletCardsView() {
   const [userOrders, setUserOrders] = useState<CardOrder[]>([]);
   const [confirmedCards, setConfirmedCards] = useState<StoredCard[]>([]);
 
-  const refreshUserData = () => {
+  const refreshUserData = async () => {
     if (!user) return;
-    const all = loadAllOrders();
-    const mine = all.filter(o => o.userId === user.id);
-    setUserOrders(mine);
-
-    const cards: StoredCard[] = mine
-      .filter(o => o.status === 'confirmed')
-      .map(o => ({
-        id: o.id,
-        tier: o.tier,
-        number: o.cardNumber,
-        expiry: o.cardExpiry,
-        holder: o.cardHolder,
-        cvv: o.cardCvv ?? '***',
-        balance: '$0.00',
-        addedAt: o.submittedAt,
-      }));
-    setConfirmedCards(cards);
+    try {
+      const [ordersRes, cardsRes] = await Promise.all([
+        authFetch('/api/cards/orders/'),
+        authFetch('/api/cards/cards/'),
+      ]);
+      if (ordersRes.ok) {
+        const data = await ordersRes.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setUserOrders(data.map((o: any) => ({
+          id: o.id,
+          tier: o.tier,
+          status: o.status,
+          paymentMethod: o.payment_method,
+          proofImageUrl: o.proof_image_url,
+          submittedAt: o.submitted_at,
+          cardNumber: o.card_number,
+          cardExpiry: o.card_expiry,
+          cardHolder: o.card_holder,
+        } as CardOrder)));
+      }
+      if (cardsRes.ok) {
+        const data = await cardsRes.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setConfirmedCards(data.map((o: any) => ({
+          id: String(o.id),
+          tier: o.tier as CardTier,
+          number: o.card_number as string,
+          expiry: o.card_expiry as string,
+          holder: o.card_holder as string,
+          cvv: o.card_cvv as string,
+          balance: '$0.00',
+          addedAt: o.submitted_at as string,
+        } as StoredCard)));
+      }
+    } catch { /* silently fail */ }
   };
 
   useEffect(() => {
@@ -1027,11 +1078,6 @@ export default function WalletCardsView() {
   };
 
   const handleOrderSubmitted = (order: CardOrder) => {
-    if (!user) return;
-    order.userId = user.id;
-    const all = loadAllOrders();
-    all.push(order);
-    saveAllOrders(all);
     setLatestOrder(order);
     setUserOrders(prev => [...prev, order]);
     setStep('done');
@@ -1114,19 +1160,7 @@ export default function WalletCardsView() {
               })}
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {['Fund Card', 'Freeze Card', 'Card Details'].map((action, i) => (
-                <motion.button
-                  key={action}
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.05 }}
-                  className="flex flex-col items-center gap-2 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 hover:border-gold/40 hover:bg-gold/5 transition text-xs font-semibold text-gray-700 dark:text-gray-300"
-                >
-                  <CreditCard size={18} className="text-gold" />
-                  {action}
-                </motion.button>
-              ))}
-            </div>
+           
 
             <motion.div
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}

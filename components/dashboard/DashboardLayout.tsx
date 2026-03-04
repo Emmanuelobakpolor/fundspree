@@ -17,9 +17,9 @@ import {
   Menu,
   X,
   Bell,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
-import { FundSphereLogo } from '../icons/CryptoIcons';
 import HomeView from './views/HomeView';
 import WalletCardsView from './views/WalletCardsView';
 import LoansView from './views/LoansView';
@@ -28,12 +28,14 @@ import ProfileView from './views/ProfileView';
 import LinkWalletView from './views/LinkWalletView';
 import SecurityView from './views/SecurityView';
 import SupportView from './views/SupportView';
+import ReferralView from './views/ReferralView';
 
 type ViewId =
   | 'dashboard'
   | 'wallet-cards'
   | 'loans'
   | 'spin-win'
+  | 'referral'
   | 'profile'
   | 'link-wallet'
   | 'security'
@@ -48,11 +50,11 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-   { id: 'link-wallet', label: 'Link Wallet', icon: ArrowLeftRight },
+  { id: 'link-wallet', label: 'Link Wallet', icon: ArrowLeftRight },
   { id: 'loans', label: 'Loans', icon: Banknote },
   { id: 'spin-win', label: 'Spin & Win', icon: Gift },
-    { id: 'wallet-cards', label: 'Wallet Cards', icon: CreditCard },
-
+  { id: 'wallet-cards', label: 'Wallet Cards', icon: CreditCard },
+  { id: 'referral', label: 'Referral', icon: Users },
 ];
 
 const settingsNav: NavItem[] = [
@@ -66,6 +68,7 @@ const viewTitles: Record<ViewId, string> = {
   'wallet-cards': 'Wallet Cards',
   loans: 'Loans',
   'spin-win': 'Spin & Win',
+  referral: 'Referral',
   profile: 'Profile Setting',
   'link-wallet': 'Link Wallet',
   security: '2FA Security',
@@ -80,10 +83,11 @@ function ViewRenderer({
   navigate: (id: ViewId) => void;
 }) {
   switch (activeView) {
-    case 'dashboard':    return <HomeView />;
+    case 'dashboard':    return <HomeView onNavigateToCards={() => navigate('wallet-cards')} onNavigateToProfile={() => navigate('profile')} />;
     case 'wallet-cards': return <WalletCardsView />;
     case 'loans':        return <LoansView onNavigateToCards={() => navigate('wallet-cards')} />;
     case 'spin-win':     return <SpinWinView onNavigateToCards={() => navigate('wallet-cards')} />;
+    case 'referral':     return <ReferralView />;
     case 'profile':      return <ProfileView />;
     case 'link-wallet':  return <LinkWalletView onNavigateToCards={() => navigate('wallet-cards')} />;
     case 'security':     return <SecurityView />;
@@ -119,11 +123,12 @@ export default function DashboardLayout() {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-6 border-b border-white/10">
-        <div className="w-10 h-10 rounded-xl bg-gold-gradient flex items-center justify-center flex-shrink-0">
-          <FundSphereLogo size={28} />
-        </div>
-        <span className="font-bold text-lg text-white tracking-tight">FundSphere</span>
+      <div className="flex items-center px-6 py-6 border-b border-white/10">
+        <img
+          src="/assets/Screenshot_2026-03-01_104801-removebg-preview.png"
+          alt="FundSphere"
+          className="h-20 w-auto object-contain brightness-0 invert"
+        />
       </div>
 
       {/* Main Nav */}
@@ -255,14 +260,7 @@ export default function DashboardLayout() {
 
           <div className="flex items-center gap-3">
             {/* Notification bell */}
-            <div className="relative">
-              <button className="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition">
-                <Bell size={18} />
-              </button>
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                2
-              </span>
-            </div>
+            
 
             {/* User avatar */}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-white/10 rounded-full">
