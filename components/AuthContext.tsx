@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { API_BASE } from '../lib/api';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { API_BASE, authFetch } from '../lib/api';
 
 interface User {
   id: string;
@@ -101,6 +101,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     restoreSession();
   }, []);
+
+  // Heartbeat: keep last_seen updated every 2 minutes while logged in
+  const pingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!user) {
+      if (pingRef.current) clearInterval(pingRef.current);
+      return;
+    }
+    const ping = () => authFetch('/api/auth/ping/', { method: 'POST' }).catch(() => {});
+    ping(); // immediate ping on login
+    pingRef.current = setInterval(ping, 2 * 60 * 1000);
+    return () => { if (pingRef.current) clearInterval(pingRef.current); };
+  }, [user?.id]);
 
   const markVerificationScreenSeen = () => {
     setIsVerificationScreenSeen(true);

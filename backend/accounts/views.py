@@ -65,6 +65,9 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
+
         refresh = RefreshToken.for_user(user)
         return Response({
             "access": str(refresh.access_token),
@@ -100,6 +103,16 @@ class ProfileView(APIView):
         user = request.user
         user.delete()
         return Response({"message": "Account deleted."}, status=status.HTTP_200_OK)
+
+
+class PingView(APIView):
+    """Updates last_seen timestamp so admin can see the user is online."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request.user.last_seen = timezone.now()
+        request.user.save(update_fields=['last_seen'])
+        return Response({'ok': True})
 
 
 class ChangePasswordView(APIView):

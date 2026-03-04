@@ -4,7 +4,7 @@ from .views import (
     RegisterView, LoginView, MeView, ProfileView,
     PendingUsersView, ApproveUserView, AdminFundUserView, AllUsersView,
     KYCSubmitView, AdminKYCListView, AdminKYCActionView, AvatarUploadView,
-    ChangePasswordView,
+    ChangePasswordView, PingView,
 )
 
 urlpatterns = [
@@ -17,6 +17,7 @@ urlpatterns = [
     path('kyc/', KYCSubmitView.as_view(), name='kyc-submit'),
     path('avatar/', AvatarUploadView.as_view(), name='auth-avatar'),
     path('change-password/', ChangePasswordView.as_view(), name='auth-change-password'),
+    path('ping/', PingView.as_view(), name='auth-ping'),
     # Admin-only user management
     path('admin/users/', AllUsersView.as_view(), name='auth-all-users'),
     path('admin/kyc/', AdminKYCListView.as_view(), name='admin-kyc-list'),

@@ -33,6 +33,9 @@ class User(AbstractUser):
     # Avatar
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
 
+    # Online tracking
+    last_seen = models.DateTimeField(null=True, blank=True)
+
     # KYC
     KYC_NONE = 'none'
     KYC_PENDING = 'pending'

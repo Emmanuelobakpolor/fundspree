@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
+from datetime import timedelta
 from .models import User, KYCSubmission
 
 
@@ -52,6 +54,8 @@ class UserSerializer(serializers.ModelSerializer):
     referralCount = serializers.SerializerMethodField()
     kycStatus = serializers.CharField(source='kyc_status', read_only=True)
     avatarUrl = serializers.SerializerMethodField()
+    isOnline = serializers.SerializerMethodField()
+    lastLogin = serializers.DateTimeField(source='last_login', read_only=True)
 
     class Meta:
         model = User
@@ -59,14 +63,19 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'email', 'name', 'phone', 'country', 'dateOfBirth',
             'welcomeBonus', 'balance', 'referralBonus',
             'withdrawalThisMonth', 'withdrawalAllTime',
-            'referralCode', 'referralCount', 'kycStatus', 'avatarUrl',
+            'referralCode', 'referralCount', 'kycStatus', 'avatarUrl', 'isOnline',
+            'lastLogin',
         )
 
     def get_avatarUrl(self, obj):
         if obj.avatar:
-            # Cloudinary returns full URL, so no need to build absolute URI
             return obj.avatar.url
         return None
+
+    def get_isOnline(self, obj):
+        if not obj.last_seen:
+            return False
+        return timezone.now() - obj.last_seen < timedelta(minutes=5)
 
     def get_referralCount(self, obj):
         return obj.referrals.count()

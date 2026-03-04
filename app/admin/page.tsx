@@ -27,6 +27,8 @@ interface ApiUser {
   withdrawalAllTime: string;
   referralCode: string;
   referralCount: number;
+  isOnline?: boolean;
+  lastLogin?: string | null;
   isPending?: boolean;
 }
 
@@ -570,9 +572,14 @@ export default function AdminPage() {
               className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white/10 p-5"
             >
               <div className="flex items-start gap-4">
-                {/* Avatar */}
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                  {(user.name || user.email).charAt(0).toUpperCase()}
+                {/* Avatar with online indicator */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                    {(user.name || user.email).charAt(0).toUpperCase()}
+                  </div>
+                  {user.isOnline && (
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-900" title="Online" />
+                  )}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -587,6 +594,11 @@ export default function AdminPage() {
                       <p className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</p>
                       <p className="text-xs text-gray-500">{user.email}</p>
                       {user.phone && <p className="text-xs text-gray-400 mt-0.5">{user.phone}</p>}
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Last login: <span className="font-semibold text-gray-600 dark:text-gray-300">
+                          {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+                        </span>
+                      </p>
                       <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-2">
                         <span className="text-xs text-gray-500">Balance: <span className="font-bold text-gray-800 dark:text-gray-200">${parseFloat(user.balance || '0').toFixed(2)}</span></span>
                         <span className="text-xs text-gray-500">Welcome: <span className="font-bold text-gray-800 dark:text-gray-200">${user.welcomeBonus}</span></span>

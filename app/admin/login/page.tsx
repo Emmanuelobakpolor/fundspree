@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
             Admin Dashboard
           </h1>
           <p className="text-gray-500 text-sm">
-            Sign in to manage your Fundspree admin account
+            Sign in to manage your Fundsphere admin account
           </p>
         </div>
 
