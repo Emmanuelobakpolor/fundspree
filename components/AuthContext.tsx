@@ -5,6 +5,7 @@ import { API_BASE, authFetch } from '../lib/api';
 
 interface User {
   id: string;
+  username: string;
   email: string;
   name: string;
   phone: string;
@@ -27,7 +28,7 @@ interface AuthContextType {
   isLoading: boolean;
   isPendingApproval: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, referralCode?: string) => Promise<string | null>;
+  register: (username: string, name: string, email: string, password: string, phone: string, country: string, dateOfBirth: string, referralCode?: string) => Promise<string | null>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
   refreshUser: () => Promise<void>;
@@ -153,12 +154,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string, referralCode?: string): Promise<string | null> => {
+  const register = async (username: string, name: string, email: string, password: string, phone: string, country: string, dateOfBirth: string, referralCode?: string): Promise<string | null> => {
     try {
       const res = await fetch(`${API_BASE}/api/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, ...(referralCode ? { referral_code: referralCode } : {}) }),
+        body: JSON.stringify({
+          username,
+          name,
+          email,
+          password,
+          phone,
+          country,
+          date_of_birth: dateOfBirth,
+          ...(referralCode ? { referral_code: referralCode } : {}),
+        }),
       });
 
       if (res.status === 201) return null;

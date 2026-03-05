@@ -82,7 +82,7 @@ const CARD_TIERS: CardTierConfig[] = [
     id: 'platinum',
     name: 'Platinum Card',
     tagline: 'Elevated freedom & rewards',
-    price: '2,500 USD',
+    price: '3,000 USD',
     gradient: 'from-gray-700 via-gray-600 to-gray-500',
     icon: Zap,
     badge: 'Most Popular',

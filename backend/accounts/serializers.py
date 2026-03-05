@@ -12,23 +12,37 @@ class RegisterSerializer(serializers.ModelSerializer):
         validators=[validate_password],
     )
     referral_code = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    phone = serializers.CharField(required=True)
+    country = serializers.CharField(required=True)
+    date_of_birth = serializers.DateField(required=True)
 
     class Meta:
         model = User
-        fields = ('name', 'email', 'password', 'referral_code')
+        fields = ('username', 'name', 'email', 'password', 'referral_code', 'phone', 'country', 'date_of_birth')
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("That username is already taken.")
+        return value
+
     def create(self, validated_data):
         referral_code = validated_data.pop('referral_code', None)
+        phone = validated_data.pop('phone')
+        country = validated_data.pop('country')
+        date_of_birth = validated_data.pop('date_of_birth')
         user = User.objects.create_user(
-            username=validated_data['email'],
+            username=validated_data['username'],
             email=validated_data['email'],
             name=validated_data['name'],
             password=validated_data['password'],
+            phone=phone,
+            country=country,
+            date_of_birth=date_of_birth,
             is_active=False,
             is_approved=False,
         )
@@ -60,7 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'name', 'phone', 'country', 'dateOfBirth',
+            'id', 'username', 'email', 'name', 'phone', 'country', 'dateOfBirth',
             'welcomeBonus', 'balance', 'referralBonus',
             'withdrawalThisMonth', 'withdrawalAllTime',
             'referralCode', 'referralCount', 'kycStatus', 'avatarUrl', 'isOnline',
@@ -88,8 +102,14 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('name', 'email', 'phone', 'country', 'dateOfBirth')
-        extra_kwargs = {'email': {'required': False}}
+        fields = ('username', 'name', 'email', 'phone', 'country', 'dateOfBirth')
+        extra_kwargs = {'email': {'required': False}, 'username': {'required': False}}
+
+    def validate_username(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+            raise serializers.ValidationError("That username is already taken.")
+        return value
 
     def validate_email(self, value):
         user = self.context['request'].user

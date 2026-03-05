@@ -126,6 +126,7 @@ export default function ProfileView() {
 
   // ── Profile form ─────────────────────────────────────────────────────────
   const [form, setForm] = useState({
+    username: user?.username ?? '',
     name: user?.name ?? '',
     email: user?.email ?? '',
     phone: user?.phone ?? '',
@@ -161,6 +162,7 @@ export default function ProfileView() {
       const res = await authFetch('/api/auth/profile/', {
         method: 'PATCH',
         body: JSON.stringify({
+          username: form.username,
           name: form.name,
           email: form.email,
           phone: form.phone,
@@ -290,6 +292,7 @@ export default function ProfileView() {
       {/* Personal info */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-5 space-y-4">
         <p className="font-semibold text-black dark:text-white">Personal Information</p>
+        {field('Username', 'username')}
         {field('Full Name', 'name')}
         {field('Email Address', 'email', 'email')}
         {field('Phone Number', 'phone', 'tel', '+1 (000) 000-0000')}

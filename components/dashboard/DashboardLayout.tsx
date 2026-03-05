@@ -132,7 +132,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Main Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto dashboard-scroll px-3 py-4 space-y-1">
         {mainNav.map((item) => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
@@ -275,7 +275,7 @@ export default function DashboardLayout() {
         </header>
 
         {/* Scrollable page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto dashboard-scroll">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeView}

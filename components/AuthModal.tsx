@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, User, Mail, Lock, Eye, EyeOff, Ticket } from 'lucide-react';
+import { X, User, Mail, Lock, Eye, EyeOff, Ticket, Phone, Globe, CalendarDays } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import VerificationStatus from './VerificationStatus';
 
@@ -17,10 +17,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
+    username: '',
     name: '',
     email: '',
     password: '',
     referralCode: '',
+    phone: '',
+    country: '',
+    dateOfBirth: '',
   });
   const [error, setError] = useState('');
   const [registered, setRegistered] = useState(false);
@@ -51,7 +55,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       if (mode === 'register') {
-        const error = await register(formData.name, formData.email, formData.password, formData.referralCode || undefined);
+        const error = await register(formData.username, formData.name, formData.email, formData.password, formData.phone, formData.country, formData.dateOfBirth, formData.referralCode || undefined);
         if (error === null) {
           setRegistered(true);
         } else {
@@ -83,8 +87,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md my-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-2xl font-bold text-black dark:text-white">
             {mode === 'register' ? 'Create Account' : 'Sign In'}
@@ -120,6 +124,85 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     required
                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
                     placeholder="Enter your full name"
+                  />
+                </div>
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Username
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
+                    placeholder="Choose a username"
+                  />
+                </div>
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
+                    placeholder="+1 (000) 000-0000"
+                  />
+                </div>
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Country
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
+                    placeholder="Your country"
+                  />
+                </div>
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Date of Birth
+                </label>
+                <div className="relative">
+                  <CalendarDays className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
                   />
                 </div>
               </div>
@@ -214,7 +297,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 onClick={() => {
                   setMode(mode === 'register' ? 'login' : 'register');
                   setError('');
-                  setFormData({ name: '', email: '', password: '', referralCode: '' });
+                  setFormData({ username: '', name: '', email: '', password: '', referralCode: '', phone: '', country: '', dateOfBirth: '' });
                 }}
                 className="text-gold hover:text-gold/80 font-medium"
               >

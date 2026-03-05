@@ -72,7 +72,7 @@ const CARD_TIER_INFO = [
     id: 'platinum',
     name: 'Platinum Card',
     tagline: 'Elevated freedom & rewards',
-    price: '2,500 USD',
+    price: '3,000 USD',
     badge: 'Most Popular',
     Icon: Zap,
     iconBg: 'bg-gray-100 dark:bg-gray-500/20',

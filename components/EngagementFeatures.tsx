@@ -35,7 +35,7 @@ const cardTiers = [
   {
     name: 'Platinum Card',
     tagline: 'Elevated freedom & rewards',
-    price: '2,500 USD',
+    price: '3,000 USD',
     badge: 'Most Popular',
     Icon: Zap,
     highlight: true,
