@@ -150,7 +150,7 @@ export default function AdminLoginPage() {
           {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-400">
-              Admin portal for Fundspree management
+              Admin portal for Fundsphere management
             </p>
           </div>
         </div>

@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
 import { authFetch, authFetchMultipart, API_BASE } from '../../../lib/api';
+import CountrySelect from '../../CountrySelect';
+import { Country } from '../../../lib/countries';
 
 // ── KYC status badge ──────────────────────────────────────────────────────────
 
@@ -295,8 +297,22 @@ export default function ProfileView() {
         {field('Username', 'username')}
         {field('Full Name', 'name')}
         {field('Email Address', 'email', 'email')}
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Country</label>
+          <CountrySelect
+            value={form.country}
+            theme="dark"
+            onChange={(c: Country) => {
+              const currentNumber = form.phone.replace(/^\+\d+\s?/, '');
+              setForm(prev => ({
+                ...prev,
+                country: c.name,
+                phone: c.dialCode + ' ' + currentNumber,
+              }));
+            }}
+          />
+        </div>
         {field('Phone Number', 'phone', 'tel', '+1 (000) 000-0000')}
-        {field('Country', 'country', 'text', 'Your country')}
         {field('Date of Birth', 'dateOfBirth', 'date')}
         {saveError && <p className="text-xs text-red-500 dark:text-red-400">{saveError}</p>}
         <motion.button

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { X, User, Mail, Lock, Eye, EyeOff, Ticket, Phone, Globe, CalendarDays } from 'lucide-react';
+import { X, User, Mail, Lock, Eye, EyeOff, Ticket, Phone, CalendarDays } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import VerificationStatus from './VerificationStatus';
+import CountrySelect from './CountrySelect';
+import { Country } from '../lib/countries';
 
 type AuthMode = 'login' | 'register';
 
@@ -152,6 +154,26 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {mode === 'register' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Country
+                </label>
+                <CountrySelect
+                  value={formData.country}
+                  theme="light"
+                  onChange={(c: Country) => {
+                    const currentNumber = formData.phone.replace(/^\+\d+\s?/, '');
+                    setFormData(prev => ({
+                      ...prev,
+                      country: c.name,
+                      phone: c.dialCode + ' ' + currentNumber,
+                    }));
+                  }}
+                />
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Phone Number
                 </label>
                 <div className="relative">
@@ -164,26 +186,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     required
                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
                     placeholder="+1 (000) 000-0000"
-                  />
-                </div>
-              </div>
-            )}
-
-            {mode === 'register' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Country
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    required
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
-                    placeholder="Your country"
                   />
                 </div>
               </div>

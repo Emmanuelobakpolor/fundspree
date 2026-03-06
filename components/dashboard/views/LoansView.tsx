@@ -63,7 +63,7 @@ const CARD_TIER_INFO = [
     features: [
       'Virtual Visa debit card',
       'Priority support (email + chat)',
-      'Up to $70,000 monthly withdrawal',
+      'Up to $70,000 withdrawal',
       'No loan access',
       'No Spin & Win access',
     ],

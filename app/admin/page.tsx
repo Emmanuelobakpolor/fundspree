@@ -1164,7 +1164,7 @@ export default function AdminPage() {
               <Shield size={20} className="text-white dark:text-black" />
             </div>
             <div>
-              <p className="text-base font-black text-gray-900 dark:text-white">Fundspree</p>
+              <p className="text-base font-black text-gray-900 dark:text-white">Fundsphere</p>
               <p className="text-xs text-gray-500">Admin Portal</p>
             </div>
           </div>
@@ -1213,7 +1213,7 @@ export default function AdminPage() {
             </button>
             <div>
               <h2 className="text-xl font-black text-gray-900 dark:text-white">{activeNav?.label ?? 'Dashboard'}</h2>
-              <p className="text-xs text-gray-500 hidden sm:block">Fundspree Admin Portal</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Fundsphere Admin Portal</p>
             </div>
           </div>
           <button
