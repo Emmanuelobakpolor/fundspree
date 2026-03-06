@@ -71,7 +71,7 @@ const CARD_TIERS: CardTierConfig[] = [
     features: [
       'Virtual Visa debit card',
       'Priority support (email + chat)',
-      'Up to $70,000 withdrawal',
+      'Up to $70,000 daily withdrawal',
     ],
     cardGradient: 'from-amber-900 via-amber-800 to-amber-700',
     glowColor: 'shadow-[0_15px_60px_-10px_rgba(245,158,11,0.4)]',
@@ -89,7 +89,7 @@ const CARD_TIERS: CardTierConfig[] = [
     badgeBg: 'bg-gray-200/80 text-gray-900 border border-gray-300',
     features: [
       'All Gold benefits',
-      'Up to $300,000 withdrawal',
+      'Up to $300,000 daily withdrawal',
       'Up to $2,000 credit line',
       'Spin-to-win rewards (2 attempts)',
     ],

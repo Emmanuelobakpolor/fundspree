@@ -27,7 +27,7 @@ const cardTiers = [
     features: [
       'Virtual Visa debit card',
       'Priority support (email + chat)',
-      'Up to $70,000 withdrawal',
+      'Up to $70,000 daily withdrawal',
       'No loan access',
       'No Spin & Win access',
     ],
@@ -45,7 +45,7 @@ const cardTiers = [
     iconBg: 'bg-gray-100 dark:bg-gray-500/20',
     features: [
       'All Gold benefits',
-      'Up to $300,000 withdrawal',
+      'Up to $300,000 daily withdrawal',
       'Up to $2,000 credit line (loans)',
       'Spin & Win — 2 spins/day',
     ],
