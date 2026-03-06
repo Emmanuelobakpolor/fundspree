@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Link2, AlertCircle, User, Mail, Hash,
   CheckCircle2, Trash2, ChevronDown, Search, Wallet,
-  CreditCard, Lock,
+  CreditCard, Lock, PenLine,
 } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
 import { authFetch } from '../../../lib/api';
@@ -42,15 +42,15 @@ const EXTERNAL_WALLETS: ExternalWallet[] = [
   { id: 'asp', name: 'Advanced Swift Pay', abbr: 'ASP' },
   { id: 'sbp', name: 'Swift Business Pay', abbr: 'SBP' },
   { id: 'iwp', name: 'Insta Wallet Pay', abbr: 'IWP' },
-  { id: 'instant-wallet', name: 'Instant Wallet Pay' },
-  { id: 'universal-global', name: 'Universal Global Pay' },
-  { id: 'insta-business', name: 'Insta Business Pay' },
-  { id: 'global-swift-us', name: 'Global Swift US' },
-  { id: 'kingscoin', name: 'Kingscoin Wallet' },
-  { id: 'lezochain', name: 'LezoChain' },
-  { id: 'zenquick', name: 'ZenQuick Cash' },
-  { id: 'konnect', name: 'Konnect Wallet' },
-  { id: 'globe-pay', name: 'Globe Pay' },
+  { id: 'instant-wallet', name: 'Instant Wallet Pay', abbr: 'INW' },
+  { id: 'universal-global', name: 'Universal Global Pay', abbr: 'UGP' },
+  { id: 'insta-business', name: 'Insta Business Pay', abbr: 'IBP' },
+  { id: 'global-swift-us', name: 'Global Swift US' ,abbr: 'GS' },
+  { id: 'kingscoin', name: 'Kingscoin Wallet' ,abbr: 'KCW'},
+  { id: 'lezochain', name: 'LezoChain', abbr: 'LC' },
+  { id: 'zenquick', name: 'ZenQuick Cash', abbr: 'ZQC' },
+  { id: 'konnect', name: 'Konnect Wallet', abbr: 'KW' },
+  { id: 'globe-pay', name: 'Globe Pay', abbr: 'GP' },
 ];
 
 // ─── localStorage helpers ───────────────────────────────────────────────────────
@@ -81,11 +81,13 @@ function WalletDropdown({
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selected = EXTERNAL_WALLETS.find(w => w.id === value);
+  const OTHER = { id: 'other', name: 'Other', abbr: '...' };
+  const selected = value === 'other' ? OTHER : EXTERNAL_WALLETS.find(w => w.id === value);
   const filtered = EXTERNAL_WALLETS.filter(w =>
     w.name.toLowerCase().includes(search.toLowerCase()) ||
     (w.abbr && w.abbr.toLowerCase().includes(search.toLowerCase()))
   );
+  const showOther = 'other'.includes(search.toLowerCase()) || 'other wallet'.includes(search.toLowerCase()) || search === '';
 
   // Close on outside click
   useEffect(() => {
@@ -118,7 +120,11 @@ function WalletDropdown({
           {selected ? (
             <div className="flex items-center gap-2">
               <span className="text-white text-sm font-medium truncate">{selected.name}</span>
-              {selected.abbr && (
+              {selected.id === 'other' ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/10 text-white/50 border border-white/10 font-mono font-semibold flex-shrink-0">
+                  Custom
+                </span>
+              ) : selected.abbr && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/25 font-mono font-semibold flex-shrink-0">
                   {selected.abbr}
                 </span>
@@ -240,6 +246,43 @@ function WalletDropdown({
               )}
             </div>
 
+            {/* Other option */}
+            {showOther && (
+              <>
+                <div className="mx-4 border-t border-white/8" />
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={() => { onChange('other'); setOpen(false); setSearch(''); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150"
+                  style={{ background: value === 'other' ? 'rgba(212,175,55,0.08)' : undefined }}
+                  onMouseEnter={e => { if (value !== 'other') (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={e => { if (value !== 'other') (e.currentTarget as HTMLButtonElement).style.background = ''; }}
+                >
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-bold"
+                    style={{
+                      background: value === 'other' ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.05)',
+                      color: value === 'other' ? '#D4AF37' : 'rgba(255,255,255,0.4)',
+                      border: value === 'other' ? '1px solid rgba(212,175,55,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <PenLine size={12} />
+                  </div>
+                  <span className="flex-1 text-sm" style={{ color: value === 'other' ? '#D4AF37' : 'rgba(255,255,255,0.75)' }}>
+                    Other
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-semibold"
+                    style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.25)' }}
+                  >
+                    Custom
+                  </span>
+                  {value === 'other' && <CheckCircle2 size={13} className="text-[#D4AF37] flex-shrink-0" />}
+                </motion.button>
+              </>
+            )}
+
             {/* Footer hint */}
             <div className="px-4 py-2 border-t border-white/5">
               <p className="text-white/20 text-[10px]">{EXTERNAL_WALLETS.length} wallets available</p>
@@ -310,6 +353,7 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
 
   const [linkedWallets, setLinkedWallets] = useState<LinkedWallet[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string>('');
+  const [customWalletName, setCustomWalletName] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -338,11 +382,16 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
 
     if (!hasActiveCard) return setError('You need an active FundSphere card to link an external wallet. Please activate a card first.');
     if (!selectedWallet) return setError('Please select a wallet to link.');
+    if (selectedWallet === 'other' && !customWalletName.trim()) return setError('Please enter your wallet name.');
     if (!fullName.trim()) return setError('Full name is required.');
     if (!email.trim() || !email.includes('@')) return setError('A valid email address is required.');
     if (!accountNumber.trim()) return setError('Account number is required.');
     if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length < 12) return setError('A valid card number is required.');
     if (!cvv.trim() || cvv.length < 3) return setError('A valid CVV is required.');
+
+    const resolvedWalletName = selectedWallet === 'other'
+      ? customWalletName.trim()
+      : EXTERNAL_WALLETS.find(w => w.id === selectedWallet)!.name;
 
     const alreadyLinked = linkedWallets.some(
       w => w.walletId === selectedWallet && w.accountNumber === accountNumber.trim()
@@ -352,12 +401,11 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
     setSubmitting(true);
 
     setTimeout(() => {
-      const wallet = EXTERNAL_WALLETS.find(w => w.id === selectedWallet)!;
       const newEntry: LinkedWallet = {
         id: `lw_${Date.now()}`,
         userId: user.id,
         walletId: selectedWallet,
-        walletName: wallet.name,
+        walletName: resolvedWalletName,
         fullName: fullName.trim(),
         email: email.trim(),
         accountNumber: accountNumber.trim(),
@@ -370,6 +418,7 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
       setSubmitting(false);
       setSuccessId(newEntry.id);
       setSelectedWallet('');
+      setCustomWalletName('');
       setAccountNumber('');
       setCardNumber('');
       setCvv('');
@@ -384,9 +433,11 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
   };
 
   // Wallet currently being linked (for the preloader label)
-  const linkingWalletName = selectedWallet
-    ? EXTERNAL_WALLETS.find(w => w.id === selectedWallet)?.name ?? 'wallet'
-    : 'wallet';
+  const linkingWalletName = selectedWallet === 'other'
+    ? (customWalletName.trim() || 'Custom wallet')
+    : selectedWallet
+      ? EXTERNAL_WALLETS.find(w => w.id === selectedWallet)?.name ?? 'wallet'
+      : 'wallet';
 
   return (
     <div className="min-h-screen bg-black px-4 pt-6 pb-24">
@@ -526,8 +577,36 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
           </p>
           <WalletDropdown
             value={selectedWallet}
-            onChange={id => { setSelectedWallet(id); setError(null); }}
+            onChange={id => { setSelectedWallet(id); setCustomWalletName(''); setError(null); }}
           />
+
+          <AnimatePresence>
+            {selectedWallet === 'other' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <label className="block text-white/50 text-xs font-medium mb-1.5">Wallet Name</label>
+                <div className="relative">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30">
+                    <PenLine size={15} />
+                  </div>
+                  <input
+                    type="text"
+                    value={customWalletName}
+                    onChange={e => { setCustomWalletName(e.target.value); setError(null); }}
+                    placeholder="Enter your wallet name"
+                    className="w-full bg-white/5 border border-[#D4AF37]/30 rounded-xl pl-10 pr-4 py-3.5 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#D4AF37]/60 focus:bg-white/8 transition-all"
+                    autoFocus
+                  />
+                </div>
+                <p className="mt-1.5 text-white/25 text-[11px]">Enter the exact name of the wallet you want to link.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Account Details Form */}
