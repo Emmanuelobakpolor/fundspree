@@ -125,7 +125,7 @@ export default function DashboardLayout() {
         <img
           src="/assets/fundsphere_dark_transparent.png"
           alt="FundSphere"
-          className="h-24 w-auto object-contain"
+          className="h-14 w-auto object-contain"
         />
       </div>
 

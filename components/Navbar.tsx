@@ -73,13 +73,13 @@ export default function Navbar() {
   <img
     src="/assets/fundsphere_light_transparent.png"
     alt="FundSphere"
-    className="h-16 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg dark:hidden"
+    className="h-6 md:h-13 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg dark:hidden"
   />
   {/* Dark mode: show the visually light logo so it's visible on dark bg */}
   <img
     src="/assets/fundsphere_dark_transparent.png"
     alt="FundSphere"
-    className="h-16 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg hidden dark:block"
+    className="h-6 md:h-13 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg hidden dark:block"
   />
 </Link>
 
