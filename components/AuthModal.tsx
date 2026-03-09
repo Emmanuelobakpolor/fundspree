@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, User, Mail, Lock, Eye, EyeOff, Ticket, Phone, CalendarDays } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import VerificationStatus from './VerificationStatus';
@@ -12,10 +12,16 @@ type AuthMode = 'login' | 'register';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode?: AuthMode;
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [mode, setMode] = useState<AuthMode>('register');
+export default function AuthModal({ isOpen, onClose, initialMode = 'register' }: AuthModalProps) {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
+
+  // Reset to the requested mode every time the modal opens
+  useEffect(() => {
+    if (isOpen) setMode(initialMode);
+  }, [isOpen, initialMode]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({

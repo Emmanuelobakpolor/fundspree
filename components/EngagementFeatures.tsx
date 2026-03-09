@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Star, Zap, Building2 } from 'lucide-react';
+import AuthModal from './AuthModal';
 
 function TrophyIcon() {
   return (
@@ -71,7 +73,10 @@ const cardTiers = [
 ];
 
 export default function EngagementFeatures() {
+  const [showModal, setShowModal] = useState(false);
   return (
+    <>
+    <AuthModal isOpen={showModal} onClose={() => setShowModal(false)} initialMode="register" />
     <section
       id="rewards"
       className="relative py-20 lg:py-28 bg-gray-50 dark:bg-dark-soft overflow-hidden"
@@ -105,7 +110,7 @@ export default function EngagementFeatures() {
               No tokens. No gimmicks. Just direct cash rewards credited to your account.
             </p>
 
-            <button className="px-8 py-3 rounded-full bg-black dark:bg-gold text-white dark:text-black font-semibold transition-all hover:scale-[1.03]">
+            <button onClick={() => setShowModal(true)} className="px-8 py-3 rounded-full bg-black dark:bg-gold text-white dark:text-black font-semibold transition-all hover:scale-[1.03]">
               Try Your Luck
             </button>
           </motion.div>
@@ -224,7 +229,7 @@ export default function EngagementFeatures() {
                     ))}
                   </ul>
 
-                  <button className="w-full py-3 rounded-full font-semibold bg-black dark:bg-white/10 text-white hover:bg-gold hover:text-black transition-all flex items-center justify-center space-x-2">
+                  <button onClick={() => setShowModal(true)} className="w-full py-3 rounded-full font-semibold bg-black dark:bg-white/10 text-white hover:bg-gold hover:text-black transition-all flex items-center justify-center space-x-2">
                     <span>Get Started</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
@@ -236,5 +241,6 @@ export default function EngagementFeatures() {
 
       </div>
     </section>
+    </>
   );
 }

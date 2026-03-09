@@ -20,7 +20,10 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
   const { user, isAuthenticated, logout } = useAuth();
+
+  const openAuth = (mode: 'login' | 'register') => { setAuthMode(mode); setShowAuthModal(true); };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,10 +69,18 @@ export default function Navbar() {
         >
           {/* Logo */}
       <Link href="/" className="flex items-center group">
+  {/* Light mode: show the visually dark logo so it's visible on white */}
   <img
-    src="/assets/Screenshot_2026-03-01_104801-removebg-preview.png"
+    src="/assets/fundsphere_light_transparent.png"
     alt="FundSphere"
-className="h-16 md:h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg"  />
+    className="h-16 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg dark:hidden"
+  />
+  {/* Dark mode: show the visually light logo so it's visible on dark bg */}
+  <img
+    src="/assets/fundsphere_dark_transparent.png"
+    alt="FundSphere"
+    className="h-16 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-lg hidden dark:block"
+  />
 </Link>
 
           {/* Desktop Nav Links */}
@@ -121,13 +132,13 @@ className="h-16 md:h-20 w-auto object-contain transition-transform duration-300 
             ) : (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowAuthModal(true)}
+                  onClick={() => openAuth('login')}
                   className="px-5 py-2 bg-gray-100 dark:bg-gray-800 text-black dark:text-white text-sm font-semibold rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 hover:shadow-md transition-all transform hover:-translate-y-0.5"
                 >
                   Login
                 </button>
                 <button
-                  onClick={() => setShowAuthModal(true)}
+                  onClick={() => openAuth('register')}
                   className="px-5 py-2 bg-black dark:bg-gold text-white dark:text-black text-sm font-semibold rounded-full hover:shadow-lg hover:opacity-90 transition-all transform hover:-translate-y-0.5"
                 >
                   Get Started
@@ -206,13 +217,13 @@ className="h-16 md:h-20 w-auto object-contain transition-transform duration-300 
                 ) : (
                   <>
                     <button
-                      onClick={() => { setShowAuthModal(true); setIsOpen(false); }}
+                      onClick={() => { openAuth('login'); setIsOpen(false); }}
                       className="w-full px-5 py-3 bg-gray-100 dark:bg-gray-800 text-black dark:text-white text-sm font-semibold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                     >
                       Login
                     </button>
                     <button
-                      onClick={() => { setShowAuthModal(true); setIsOpen(false); }}
+                      onClick={() => { openAuth('register'); setIsOpen(false); }}
                       className="w-full px-5 py-3 bg-black dark:bg-gold text-white dark:text-black text-sm font-semibold rounded-2xl hover:opacity-90 transition-all"
                     >
                       Get Started
@@ -225,7 +236,7 @@ className="h-16 md:h-20 w-auto object-contain transition-transform duration-300 
         </AnimatePresence>
       </motion.nav>
 
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode={authMode} />
     </>
   );
 }

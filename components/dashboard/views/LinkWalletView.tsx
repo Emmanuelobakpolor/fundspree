@@ -589,7 +589,7 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
                 transition={{ duration: 0.22, ease: 'easeOut' }}
                 className="overflow-hidden"
               >
-                <label className="block text-white/50 text-xs font-medium mb-1.5">Wallet Name</label>
+                <label className="block text-white/50 text-xs font-medium mb-1.5">Wallet Link</label>
                 <div className="relative">
                   <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30">
                     <PenLine size={15} />
@@ -598,12 +598,12 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
                     type="text"
                     value={customWalletName}
                     onChange={e => { setCustomWalletName(e.target.value); setError(null); }}
-                    placeholder="Enter your wallet name"
+                    placeholder="Enter your wallet link"
                     className="w-full bg-white/5 border border-[#D4AF37]/30 rounded-xl pl-10 pr-4 py-3.5 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#D4AF37]/60 focus:bg-white/8 transition-all"
                     autoFocus
                   />
                 </div>
-                <p className="mt-1.5 text-white/25 text-[11px]">Enter the exact name of the wallet you want to link.</p>
+                <p className="mt-1.5 text-white/25 text-[11px]">Enter the exact wallet link.</p>
               </motion.div>
             )}
           </AnimatePresence>

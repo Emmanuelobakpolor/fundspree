@@ -513,16 +513,21 @@ function PurchaseModal({ onClose, onSelect }: {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm sm:p-4 p-0"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
         initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="w-full max-w-lg bg-white dark:bg-gray-950 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="w-full max-w-lg bg-white dark:bg-gray-950 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] sm:max-h-[90vh] flex flex-col"
       >
+        {/* Mobile drag handle */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden flex-shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 pt-4 sm:pt-6 pb-4 border-b border-gray-100 dark:border-white/10 flex-shrink-0">
           <div>
             <h2 className="text-xl font-bold text-black dark:text-white">Choose Your Card</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Select a tier that suits your needs</p>
@@ -533,7 +538,7 @@ function PurchaseModal({ onClose, onSelect }: {
         </div>
 
         {/* Tier list */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+        <div className="flex-1 overflow-y-auto dashboard-scroll px-4 sm:px-6 py-4 space-y-3">
           {CARD_TIERS.map((tier) => {
             const Icon = tier.icon;
             const isSelected = selected === tier.id;
@@ -544,43 +549,43 @@ function PurchaseModal({ onClose, onSelect }: {
                 onClick={() => setSelected(tier.id)}
                 className={`w-full text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
                   isSelected
-                    ? `${tier.borderColor} bg-gradient-to-r ${tier.gradient} text-white shadow-lg`
-                    : 'border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/20'
+                    ? `${tier.borderColor} bg-gradient-to-br ${tier.gradient} text-white shadow-xl`
+                    : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-900 hover:border-gray-300 dark:hover:border-white/20'
                 }`}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'}`}>
-                    <Icon size={20} className={isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-300'} />
+                {/* Top row: icon + name/badge + selected check */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${isSelected ? 'bg-white/20' : 'bg-white dark:bg-white/10 shadow-sm'}`}>
+                    <Icon size={18} className={isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-300'} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-base font-bold ${isSelected ? 'text-white' : 'text-black dark:text-white'}`}>{tier.name}</span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isSelected ? 'bg-white/20 text-white' : tier.badgeBg}`}>{tier.badge}</span>
+                      <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-black dark:text-white'}`}>{tier.name}</span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isSelected ? 'bg-white/25 text-white' : tier.badgeBg}`}>{tier.badge}</span>
                     </div>
-                    <p className={`text-xs mt-0.5 ${isSelected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{tier.tagline}</p>
-                    <ul className="mt-2 space-y-1">
-                      {tier.features.slice(0, 3).map((f) => (
-                        <li key={f} className="flex items-center gap-1.5 text-xs">
-                          <Check size={11} className={isSelected ? 'text-white/90' : 'text-green-500'} />
-                          <span className={isSelected ? 'text-white/80' : 'text-gray-600 dark:text-gray-300'}>{f}</span>
-                        </li>
-                      ))}
-                      {tier.features.length > 3 && (
-                        <li className={`text-xs ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
-                          +{tier.features.length - 3} more features
-                        </li>
-                      )}
-                    </ul>
+                    <p className={`text-xs mt-0.5 ${isSelected ? 'text-white/75' : 'text-gray-500 dark:text-gray-400'}`}>{tier.tagline}</p>
                   </div>
-                  <div className="flex-shrink-0 text-right">
-                    <span className={`text-xl font-black ${isSelected ? 'text-white' : 'text-black dark:text-white'}`}>{tier.price}</span>
-                    {isSelected && (
-                      <div className="mt-1 w-5 h-5 rounded-full bg-white/20 flex items-center justify-center ml-auto">
-                        <Check size={12} className="text-white" />
-                      </div>
-                    )}
-                  </div>
+                  {isSelected && (
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white/25 flex items-center justify-center">
+                      <Check size={13} className="text-white" />
+                    </div>
+                  )}
                 </div>
+
+                {/* Price pill */}
+                <div className={`inline-flex items-baseline gap-1 px-3 py-1.5 rounded-xl mb-3 ${isSelected ? 'bg-white/15' : 'bg-white dark:bg-white/8 border border-gray-200 dark:border-white/10'}`}>
+                  <span className={`text-lg font-black tracking-tight ${isSelected ? 'text-white' : 'text-black dark:text-white'}`}>{tier.price}</span>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-1.5">
+                  {tier.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-xs">
+                      <Check size={11} className={`flex-shrink-0 mt-0.5 ${isSelected ? 'text-white/80' : 'text-green-500'}`} />
+                      <span className={isSelected ? 'text-white/80' : 'text-gray-600 dark:text-gray-300'}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
               </motion.button>
             );
           })}

@@ -15,8 +15,6 @@ import {
   Sun,
   LogOut,
   Menu,
-  X,
-  Bell,
   Users,
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
@@ -125,9 +123,9 @@ export default function DashboardLayout() {
       {/* Logo */}
       <div className="flex items-center px-6 py-6 border-b border-white/10">
         <img
-          src="/assets/Screenshot_2026-03-01_104801-removebg-preview.png"
+          src="/assets/fundsphere_dark_transparent.png"
           alt="FundSphere"
-          className="h-20 w-auto object-contain brightness-0 invert"
+          className="h-24 w-auto object-contain"
         />
       </div>
 
@@ -263,14 +261,17 @@ export default function DashboardLayout() {
             
 
             {/* User avatar */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-white/10 rounded-full">
+            <button
+              onClick={() => navigate('profile')}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-white/10 rounded-full hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+            >
               <div className="w-7 h-7 rounded-full bg-gold-gradient flex items-center justify-center">
                 <UserCircle size={16} className="text-black" />
               </div>
               <span className="text-sm font-semibold text-black dark:text-white hidden sm:block">
                 {user?.name}
               </span>
-            </div>
+            </button>
           </div>
         </header>
 

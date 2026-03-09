@@ -1,12 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail, MapPin, Phone } from 'lucide-react';
 import Link from 'next/link';
 import { XIcon, LinkedInIcon, GitHubIcon, TelegramIcon } from './icons/CryptoIcons';
+import AuthModal from './AuthModal';
 
 export function CallToAction() {
+  const [showModal, setShowModal] = useState(false);
   return (
+    <>
     <section id="get-started" className="py-24 relative overflow-hidden">
       <div className="container mx-auto px-6">
         <motion.div
@@ -27,7 +31,7 @@ export function CallToAction() {
               Join thousands of elite investors using FundSphere for secure and seamless BTC & USDT transactions worldwide.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <button className="w-full sm:w-auto px-10 py-5 bg-black text-white font-bold rounded-full hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center space-x-2">
+              <button onClick={() => setShowModal(true)} className="w-full sm:w-auto px-10 py-5 bg-black text-white font-bold rounded-full hover:shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center space-x-2">
                 <span>Get Started Now</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
@@ -39,6 +43,8 @@ export function CallToAction() {
         </motion.div>
       </div>
     </section>
+    <AuthModal isOpen={showModal} onClose={() => setShowModal(false)} initialMode="register" />
+    </>
   );
 }
 

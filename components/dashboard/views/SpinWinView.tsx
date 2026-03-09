@@ -10,12 +10,12 @@ import { authFetch } from '../../../lib/api';
 
 const prizes = [
   { label: '$0',        color: '#1a1a1a' },
-  { label: '$5',        color: '#D4AF37' },
+  { label: '$100',        color: '#D4AF37' },
   { label: '$0',        color: '#1a1a1a' },
-  { label: '$10',       color: '#B8860B' },
+  { label: '$200',       color: '#B8860B' },
   { label: '$0',        color: '#1a1a1a' },
-  { label: '$2',        color: '#D4AF37' },
-  { label: '$0',        color: '#1a1a1a' },
+  { label: '$500',        color: '#D4AF37' },
+  { label: '$750',        color: '#1a1a1a' },
   { label: 'Try Again', color: '#333333' },
 ];
 

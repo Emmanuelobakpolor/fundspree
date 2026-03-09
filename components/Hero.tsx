@@ -282,9 +282,10 @@ export default function Hero() {
         </div>
       </div>
 
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode="register"
       />
     </section>
   );
