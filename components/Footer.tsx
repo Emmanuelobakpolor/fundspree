@@ -35,7 +35,7 @@ export function CallToAction() {
                 <span>Get Started Now</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
-              <button className="w-full sm:w-auto px-10 py-5 bg-transparent border-2 border-black/20 text-black font-bold rounded-full hover:bg-black/5 transition-all">
+              <button onClick={() => setShowModal(true)}  className="w-full sm:w-auto px-10 py-5 bg-transparent border-2 border-black/20 text-black font-bold rounded-full hover:bg-black/5 transition-all">
                 Learn More
               </button>
             </div>
