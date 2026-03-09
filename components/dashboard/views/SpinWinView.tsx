@@ -9,13 +9,13 @@ import { authFetch } from '../../../lib/api';
 // ─── Config ─────────────────────────────────────────────────────────────────────
 
 const prizes = [
-  { label: '$0',        color: '#1a1a1a' },
+  { label: '$20',        color: '#1a1a1a' },
   { label: '$100',        color: '#D4AF37' },
-  { label: '$0',        color: '#1a1a1a' },
+  { label: '$2',        color: '#1a1a1a' },
   { label: '$200',       color: '#B8860B' },
-  { label: '$0',        color: '#1a1a1a' },
-  { label: '$500',        color: '#D4AF37' },
-  { label: '$750',        color: '#1a1a1a' },
+  { label: '$5',        color: '#1a1a1a' },
+  { label: '$65',        color: '#D4AF37' },
+  { label: '$12',        color: '#1a1a1a' },
   { label: 'Try Again', color: '#333333' },
 ];
 
