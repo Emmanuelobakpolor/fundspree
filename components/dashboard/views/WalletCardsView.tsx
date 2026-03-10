@@ -464,13 +464,13 @@ function FlippableCard({ tier, cardNumber, expiry, holder, cvv, locked = false }
             stiffness: 180, 
             damping: 24 
           }}
-          style={{ transformStyle: 'preserve-3d', position: 'relative' }}
+          style={{ transformStyle: 'preserve-3d', position: 'relative', willChange: 'transform' }}
           className={`w-full rounded-3xl ${tier.glowColor}`}
         >
           {/* Front face */}
           <div
             className="w-full rounded-3xl overflow-hidden"
-            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', aspectRatio: '85.6 / 54' }}
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(0deg)', aspectRatio: '85.6 / 54' }}
           >
             <CardFront tier={tier} cardNumber={cardNumber} expiry={expiry} holder={holder} locked={locked} />
           </div>
@@ -989,12 +989,12 @@ function ConfirmedCardVisual({ card, tier }: { card: StoredCard; tier: CardTierC
             stiffness: 180, 
             damping: 24 
           }}
-          style={{ transformStyle: 'preserve-3d', position: 'relative' }}
+          style={{ transformStyle: 'preserve-3d', position: 'relative', willChange: 'transform' }}
           className={`w-full rounded-3xl ${tier.glowColor}`}
         >
           <div
             className="w-full rounded-3xl overflow-hidden"
-            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', aspectRatio: '85.6 / 54' }}
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(0deg)', aspectRatio: '85.6 / 54' }}
           >
             <CardFront tier={tier} cardNumber={card.number} expiry={card.expiry} holder={card.holder} />
           </div>
