@@ -188,7 +188,7 @@ function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
     <motion.div 
       className={`
         w-full h-full rounded-2xl bg-gradient-to-br ${tier.cardGradient}
-        p-6 relative overflow-hidden border ${tier.borderColor}
+        p-4 sm:p-6 relative overflow-hidden border ${tier.borderColor}
         shadow-2xl
       `}
       whileHover={{ scale: 1.02, y: -2 }}
@@ -238,7 +238,7 @@ function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
         </div>
 
         {/* Center – chip + network logo area */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-3 sm:mt-6">
           <motion.div 
             className="w-12 h-9 bg-gradient-to-br from-amber-300/40 to-yellow-100/30 rounded-md flex items-center justify-center border border-white/30 shadow-inner"
             initial={{ opacity: 0, x: -20 }}
@@ -258,10 +258,10 @@ function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
         </div>
 
         {/* Card number – animated reveal */}
-        <div className="mt-8 relative">
+        <div className="mt-3 sm:mt-6 relative">
           <div className="flex items-center gap-2">
             <motion.p
-              className={`text-lg md:text-xl font-mono tracking-[0.2em] font-semibold opacity-95 break-all transition-all duration-300 ${locked ? 'blur-[5px] select-none' : ''}`}
+              className={`text-sm sm:text-base md:text-xl font-mono tracking-[0.15em] sm:tracking-[0.2em] font-semibold opacity-95 break-all transition-all duration-300 ${locked ? 'blur-[5px] select-none' : ''}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 0.95, y: 0 }}
               transition={{ delay: 0.6 }}
@@ -291,7 +291,7 @@ function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
         </div>
 
         {/* Bottom – holder + expiry */}
-        <div className="flex justify-between items-end mt-6">
+        <div className="flex justify-between items-end mt-3 sm:mt-6">
           <div>
             <motion.p 
               className="text-[10px] uppercase tracking-wider opacity-60 font-medium"
@@ -348,8 +348,8 @@ function CardFront({ tier, cardNumber, expiry, holder, locked = false }: {
 
 // ─── Card Face: Back ──────────────────────────────────────────────────────────
 
-function CardBack({ tier, cvv, holder }: {
-  tier: CardTierConfig; cvv: string; holder: string;
+function CardBack({ tier, cvv, holder, locked = false }: {
+  tier: CardTierConfig; cvv: string; holder: string; locked?: boolean;
 }) {
   return (
     <motion.div 
@@ -391,15 +391,20 @@ function CardBack({ tier, cvv, holder }: {
 
           <div className="bg-white/95 rounded px-4 py-2 min-w-[70px] text-center border border-gray-300 relative overflow-hidden">
             <p className="text-[10px] uppercase tracking-wider text-gray-600 font-medium">CVV</p>
-            <motion.p 
-              className="text-lg font-mono font-bold text-gray-900"
+            <motion.p
+              className={`text-lg font-mono font-bold text-gray-900 transition-all duration-300 ${locked ? 'blur-[6px] select-none' : ''}`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6 }}
             >
               {cvv}
             </motion.p>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
+            {locked && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded">
+                <span className="text-[9px] font-bold text-gray-500 tracking-wider">🔒 LOCKED</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50 pointer-events-none" />
           </div>
         </motion.div>
 
@@ -465,7 +470,7 @@ function FlippableCard({ tier, cardNumber, expiry, holder, cvv, locked = false }
           {/* Front face */}
           <div
             className="w-full rounded-3xl overflow-hidden"
-            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', aspectRatio: '1.586 / 1.1' }}
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', aspectRatio: '85.6 / 54' }}
           >
             <CardFront tier={tier} cardNumber={cardNumber} expiry={expiry} holder={holder} locked={locked} />
           </div>
@@ -479,7 +484,7 @@ function FlippableCard({ tier, cardNumber, expiry, holder, cvv, locked = false }
               transform: 'rotateY(180deg)',
             }}
           >
-            <CardBack tier={tier} cvv={cvv} holder={holder} />
+            <CardBack tier={tier} cvv={cvv} holder={holder} locked={locked} />
           </div>
         </motion.div>
       </div>
@@ -718,7 +723,7 @@ function CheckoutScreen({ tier, holder, onBack, onSubmitted }: {
       <div className="flex-1 overflow-y-auto">
 
         {/* Card preview section */}
-        <div className="px-6 py-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/60 dark:to-gray-950 flex flex-col items-center">
+        <div className="px-4 sm:px-6 py-4 sm:py-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/60 dark:to-gray-950 flex flex-col items-center">
           <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-center mb-5">
              Activate Card Now — Preview
           </p>
@@ -989,7 +994,7 @@ function ConfirmedCardVisual({ card, tier }: { card: StoredCard; tier: CardTierC
         >
           <div
             className="w-full rounded-3xl overflow-hidden"
-            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', aspectRatio: '1.586 / 1.1' }}
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', aspectRatio: '85.6 / 54' }}
           >
             <CardFront tier={tier} cardNumber={card.number} expiry={card.expiry} holder={card.holder} />
           </div>
