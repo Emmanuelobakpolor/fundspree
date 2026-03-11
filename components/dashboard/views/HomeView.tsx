@@ -37,6 +37,7 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
   const withdrawalThisMonth = Number(user?.withdrawalThisMonth ?? 0);
   const withdrawalAllTime = Number(user?.withdrawalAllTime ?? 0);
   const usableBalance = welcomeBonus + referralBonus;
+  const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-4xl mx-auto">
@@ -133,10 +134,10 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
             </button>
           </div>
           <p className="text-4xl font-bold text-white mt-1">
-            {balanceVisible ? `$${balance.toFixed(2)}` : '••••'}{' '}
+            {balanceVisible ? `$${fmt(balance)}` : '••••'}{' '}
             <span className="text-xl font-semibold text-gray-400">USD</span>
           </p>
-          <p className="text-xs text-gray-500 mt-1">{usableBalance.toFixed(2)} USD usable</p>
+          <p className="text-xs text-gray-500 mt-1">{fmt(usableBalance)} USD usable</p>
 
           <button
             onClick={() => setShowWithdraw(true)}
@@ -159,7 +160,7 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
           Usable Balances
         </p>
         <p className="text-3xl font-bold text-black dark:text-white">
-          {usableBalance.toFixed(2)} <span className="text-base font-semibold text-gray-400">USD</span>
+          {fmt(usableBalance)} <span className="text-base font-semibold text-gray-400">USD</span>
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 dark:border-white/10">
@@ -168,7 +169,7 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
               Welcome Bonus
             </p>
             <p className="text-base font-bold text-black dark:text-white">
-              {welcomeBonus.toFixed(2)} USD
+              {fmt(welcomeBonus)} USD
             </p>
           </div>
           <div>
@@ -176,7 +177,7 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
               Referral Rewards
             </p>
             <p className="text-base font-bold text-black dark:text-white">
-              {referralBonus.toFixed(2)} USD
+              {fmt(referralBonus)} USD
             </p>
           </div>
         </div>
@@ -202,7 +203,7 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
           Total Withdrawal
         </p>
         <p className="text-3xl font-bold text-black dark:text-white">
-          {withdrawalAllTime.toFixed(2)} <span className="text-base font-semibold text-gray-400">USD</span>
+          {fmt(withdrawalAllTime)} <span className="text-base font-semibold text-gray-400">USD</span>
         </p>
         <div className="mt-4 grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 dark:border-white/10">
           <div>
@@ -210,7 +211,7 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
               This Month
             </p>
             <p className="text-base font-bold text-black dark:text-white">
-              {withdrawalThisMonth.toFixed(2)} USD
+              {fmt(withdrawalThisMonth)} USD
             </p>
           </div>
           <div>
@@ -218,7 +219,7 @@ export default function HomeView({ onNavigateToCards, onNavigateToProfile }: { o
               All Time
             </p>
             <p className="text-base font-bold text-black dark:text-white">
-              {withdrawalAllTime.toFixed(2)} USD
+              {fmt(withdrawalAllTime)} USD
             </p>
           </div>
         </div>
