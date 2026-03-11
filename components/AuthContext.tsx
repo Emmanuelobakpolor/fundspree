@@ -180,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return 'Registration failed. Please try again.';
     } catch {
-      return '⚠️Poor internet connection detected. Please refresh the page?';
+      return 'Poor internet connection detected. Please refresh the page?';
     }
   };
 
