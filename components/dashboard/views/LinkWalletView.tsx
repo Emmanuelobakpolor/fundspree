@@ -414,7 +414,7 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
           errorMsg = 'Connection failed. Contact support.';
         } else {
           // gold or platinum
-          errorMsg = `Your card does not match the ${abbr} account limit they are trying to connect. Upgrade to a higher limit card to connect successfully.`;
+          errorMsg = `Your card does not match your ${abbr} account limit. Upgrade to a higher limit card to connect successfully.`;
         }
       }
 
