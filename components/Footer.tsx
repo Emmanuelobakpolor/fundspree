@@ -107,7 +107,7 @@ export function Footer() {
               </li>
               <li className="flex items-start space-x-3 text-gray-500 dark:text-gray-400">
                 <MapPin className="w-5 h-5 text-gold flex-shrink-0" />
-                <span>100 Wall St, New York, NY 10005, USA</span>
+                <span>412 Hendrix St, Brooklyn, NY 11207</span>
               </li>
               <li className="flex items-start space-x-3 text-gray-500 dark:text-gray-400">
                 <Phone className="w-5 h-5 text-gold flex-shrink-0" />
