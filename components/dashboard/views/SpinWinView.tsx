@@ -75,6 +75,10 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
 
   const spinWheel = async () => {
     if (!user || spinning || spinsLeft <= 0) return;
+    setError('Spin & Win is temporarily not available.');
+    return;
+
+    // eslint-disable-next-line no-unreachable
     setError(null);
     setResult(null);
     setSpinning(true);
@@ -156,14 +160,29 @@ export default function SpinWinView({ onNavigateToCards: _onNavigateToCards }: {
               </div>
             </>
           ) : (
-            <p className="text-sm text-gray-400 mt-1">
-              Platinum: <span className="text-gold font-semibold">2 spins/day</span>
-              {' · '}
-              Business: <span className="text-gold font-semibold">5 spins/day</span>
+            <p className="text-sm text-amber-600 dark:text-amber-400 mt-1 font-medium">
+              Upgrade to a Platinum or Business card to access Spin &amp; Win
             </p>
           )
         )}
       </div>
+
+      {/* Upgrade Banner — gold tier */}
+      <AnimatePresence>
+        {!statusLoading && !isEligible && (
+          <motion.div
+            className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+          >
+            <AlertCircle size={18} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+            <p className="text-amber-700 dark:text-amber-300 text-sm">
+              Upgrade to a <strong>Platinum</strong> or <strong>Business</strong> card to access Spin &amp; Win.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Error Banner */}
       <AnimatePresence>

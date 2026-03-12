@@ -169,8 +169,12 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
       return setError('You need an active FundSphere card to apply for a loan. Purchase a Platinum or Business card from Wallet Cards.');
     }
     if (cardTier === 'gold') {
-      return setError('Your Gold card does not include loan access. Upgrade to a Platinum or Business card to apply.');
+      return setError('Upgrade to a Platinum or Business card to access this feature.');
     }
+    // Platinum and Business cards — feature temporarily unavailable
+    return setError('Loan application currently under review. Please check back later.');
+
+    // eslint-disable-next-line no-unreachable
     if (selectedPlan === null) return setError('Please select a loan plan.');
     if (!purpose) return setError('Please select a loan purpose.');
 
@@ -184,9 +188,8 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
       );
     }
 
-    // Check if user already has a pending application
     if (myLoans.some(loan => loan.status === 'pending')) {
-      return setError('Loan application is currently under review. Check back later');
+      return setError('Loan application is currently under review. Please check back later.');
     }
 
     setSubmitting(true);
@@ -260,6 +263,20 @@ export default function LoansView({ onNavigateToCards: _onNavigateToCards }: { o
             <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/25 font-semibold">
               {tierLabel}
             </span>
+          </motion.div>
+        )}
+
+        {/* Upgrade Banner — gold tier */}
+        {!tierLoading && cardTier === 'gold' && (
+          <motion.div
+            className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <AlertCircle size={18} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+            <p className="text-amber-700 dark:text-amber-300 text-sm">
+              Upgrade to a <strong>Platinum</strong> or <strong>Business</strong> card to access this feature.
+            </p>
           </motion.div>
         )}
 
