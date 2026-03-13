@@ -103,7 +103,7 @@ export function Footer() {
             <ul className="space-y-6">
               <li className="flex items-start space-x-3 text-gray-500 dark:text-gray-400">
                 <Mail className="w-5 h-5 text-gold flex-shrink-0" />
-                <span>support@fundsphere.com</span>
+                <span>info@fundssphere.com</span>
               </li>
               <li className="flex items-start space-x-3 text-gray-500 dark:text-gray-400">
                 <MapPin className="w-5 h-5 text-gold flex-shrink-0" />
