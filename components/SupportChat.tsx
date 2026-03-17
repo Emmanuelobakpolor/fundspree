@@ -9,7 +9,7 @@ interface SupportChatProps {
 }
 
 export default function SupportChat({
-  whatsappNumber = "+14254456824",
+  whatsappNumber = "14254456824",
   message = 'Hello, I need assistance',
 }: SupportChatProps) {
   const [isOpen, setIsOpen] = useState(false);
