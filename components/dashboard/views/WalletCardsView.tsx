@@ -89,7 +89,7 @@ const CARD_TIERS: CardTierConfig[] = [
     badgeBg: 'bg-gray-200/80 text-gray-900 border border-gray-300',
     features: [
       'All Gold benefits',
-      'Up to $300,000 daily withdrawal',
+      'Up to $450,000 daily withdrawal',
       'Up to $2,000 credit line',
       'Spin-to-win rewards (2 attempts)',
     ],

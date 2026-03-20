@@ -47,7 +47,7 @@ const cardTiers = [
     iconBg: 'bg-gray-100 dark:bg-gray-500/20',
     features: [
       'All Gold benefits',
-      'Up to $300,000 daily withdrawal',
+      'Up to $450,000 daily withdrawal',
       'Up to $2,000 credit line (loans)',
       'Spin & Win — 2 spins/day',
     ],
