@@ -9,7 +9,7 @@ interface VerificationStatusProps {
 
 export default function VerificationStatus({ onBack }: VerificationStatusProps) {
   const handleContactSupport = () => {
-    const whatsappNumber = '2341234567890';
+    const whatsappNumber = '14254456824';
     const message = encodeURIComponent('Hello, I need assistance with my account activation');
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };

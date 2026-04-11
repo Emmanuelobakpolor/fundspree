@@ -191,7 +191,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'register' }:
                     onChange={handleChange}
                     required
                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-gold focus:border-transparent"
-                    placeholder="+1 (000) 000-0000"
+                    placeholder="14254456824"
                   />
                 </div>
               </div>
