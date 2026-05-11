@@ -136,7 +136,7 @@ interface SupportChatProps {
 }
 
 export default function SupportChat({
-  whatsappNumber = "14254456824",
+  whatsappNumber = "17088137749",
   message = 'Hello, I would like to activate my Fundssphere account',
 }: SupportChatProps) {
   const [isOpen, setIsOpen] = useState(false);

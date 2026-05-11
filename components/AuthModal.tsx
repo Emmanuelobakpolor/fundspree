@@ -194,7 +194,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'register' }:
 <<<<<<< HEAD
                     placeholder="17088137749"
 =======
-                    placeholder="14254456824"
+                    placeholder="17088137749"
 >>>>>>> 407f4d21d68f2a5ba83265bbdb668257daf7b0b5
                   />
                 </div>
